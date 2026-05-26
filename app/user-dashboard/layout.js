@@ -19,6 +19,7 @@ export default async function AdminLayout({ children }) {
     redirect("/");
   }
 
+
   return (
     <div className="flex items-center min-h-screen bg-black">
       <SideBar  type="user"/>

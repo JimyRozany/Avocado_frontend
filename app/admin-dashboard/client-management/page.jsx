@@ -1,7 +1,7 @@
 "use client";
 import CaseTable from "@/components/Admin/CaseManagement/CaseTable";
 import StatsCards from "@/components/Admin/Home/StatsCards";
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Activity,
@@ -13,6 +13,8 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { GetClient } from "@/lib/ClientManagement";
 
 const STATUS_FILTERS = [
   "ALL",
@@ -140,6 +142,9 @@ const CASE_STATS = [
 ];
 
 const Case = () => {
+  const { ClientDataDetails, loading, ClientData } = useSelector(
+    (state) => state.ClientRTK,
+  );
   const router = useRouter();
   const getItems = (row, actions) => [
     {
@@ -170,6 +175,12 @@ const Case = () => {
       action: () => actions.handleDelete(row.id),
     },
   ];
+  const dispatch = useDispatch();
+  console.log(ClientData.data);
+
+  useEffect(() => {
+    dispatch(GetClient());
+  }, [dispatch]);
   return (
     <div>
       {/* Top 4 stat cards */}
@@ -178,7 +189,7 @@ const Case = () => {
         STATUS_FILTERS={STATUS_FILTERS}
         getItems={getItems}
         statusConfig={statusConfig}
-        INITIAL_CASES={INITIAL_CASES}
+        INITIAL_CASES={ClientData.data}
         CASE_COLUMNS={CASE_COLUMNS}
         type="client"
       />

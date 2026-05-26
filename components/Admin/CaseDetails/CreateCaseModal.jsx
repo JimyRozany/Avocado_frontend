@@ -2,10 +2,13 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { useDispatch, useSelector } from "react-redux";
+import { CreateCase } from "@/lib/CaseManagement";
+import { toast } from "react-toastify";
 
 export default function CreateCaseModalCompact({ onClose }) {
   const fileRef = useRef(null);
-
+  const {loadingCreate} =useSelector((state)=>state.CaseRTK)
   const [form, setForm] = useState({
     caseName: "",
     lawyer: "",
@@ -24,7 +27,7 @@ export default function CreateCaseModalCompact({ onClose }) {
   const [documents, setDocuments] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [sessionText, setSessionText] = useState("");
-
+  const dispatch=useDispatch()
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -54,14 +57,19 @@ export default function CreateCaseModalCompact({ onClose }) {
     setSessionText("");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if(loadingCreate){
+      return
+    }
     const payload = {
       ...form,
       documents,
       sessions,
     };
-
-    console.log("✅ CASE DATA:", payload);
+    const result = await dispatch(CreateCase(payload))
+    if(CreateCase.fulfilled.match(result)){
+      toast.success("Added successfully")
+    }
     onClose();
   };
 

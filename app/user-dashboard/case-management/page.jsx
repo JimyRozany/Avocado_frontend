@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import React from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
+import { DeleteCase } from "@/lib/CaseManagement";
 const CASE_STATS = [
   {
     label: "Total Cases",
@@ -148,6 +150,7 @@ const CASE_COLUMNS = [
 
 const CaseManagement = () => {
   const router = useRouter();
+  const dispatch = useDispatch();
   const getItems = (row, actions) => [
     {
       label: "View Details",
@@ -188,7 +191,13 @@ const CaseManagement = () => {
       icon: Trash2,
       color: "text-red-500",
       hover: "hover:bg-red-50",
-      action: () => actions.handleDelete(row.id),
+      action: async () => {
+        const result = await dispatch(DeleteCase(row.id));
+        if (DeleteCase.fulfilled.match(result)) {
+          toast.success("Deleted successfully");
+          actions.closeMenu();
+        }
+      },
     },
   ];
   return (

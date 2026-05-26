@@ -1,15 +1,25 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { HiX } from "react-icons/hi";
-import { useState } from "react";
+import { HiX, HiChevronDown } from "react-icons/hi";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { LoginUser, RegisterUser } from "@/lib/UserAuth";
+import { ClipLoader } from "react-spinners";
 
 export default function AuthDrawer({ open, onClose, type }) {
+  const { loading } = useSelector((state) => state.UserRTK);
+  const dispatch = useDispatch();
+
+  const [roleOpen, setRoleOpen] = useState(false);
+  const roleRef = useRef(null);
+
   const [registerData, setRegisterData] = useState({
     fullName: "",
     email: "",
     phone: "",
     password: "",
+    taype: "user",
   });
 
   const [loginData, setLoginData] = useState({
@@ -17,14 +27,54 @@ export default function AuthDrawer({ open, onClose, type }) {
     password: "",
   });
 
-  const handleRegister = (e) => {
+  const roles = ["user", "avocato"];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (roleRef.current && !roleRef.current.contains(event.target)) {
+        setRoleOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleRegister = async (e) => {
+    if (loading) {
+      return;
+    }
+
     e.preventDefault();
-    console.log(registerData);
+
+    const data = {
+      name: registerData.fullName,
+      email: registerData.email,
+      mobile: registerData.phone,
+      password: registerData.password,
+      type: registerData.taype,
+    };
+    const result = await dispatch(RegisterUser(data));
+    if (RegisterUser.fulfilled.match(result)) {
+      onClose();
+    }
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
+    if (loading) {
+      return;
+    }
+
     e.preventDefault();
-    console.log(loginData);
+
+    const result = await dispatch(LoginUser(loginData));
+
+    if (LoginUser.fulfilled.match(result)) {
+      onClose();
+    }
   };
 
   return (
@@ -68,7 +118,7 @@ export default function AuthDrawer({ open, onClose, type }) {
 
                 <button
                   onClick={onClose}
-                  className="text-3xl text-white/70 hover:text-white"
+                  className="text-3xl text-white/70 hover:text-white transition"
                 >
                   <HiX />
                 </button>
@@ -80,7 +130,7 @@ export default function AuthDrawer({ open, onClose, type }) {
                   <input
                     type="text"
                     placeholder="Full Name"
-                    className="rounded-full bg-white/20 px-6 py-4 outline-none"
+                    className="rounded-full bg-white/20 px-6 py-4 outline-none placeholder:text-white/50 backdrop-blur-md"
                     onChange={(e) =>
                       setRegisterData({
                         ...registerData,
@@ -93,7 +143,7 @@ export default function AuthDrawer({ open, onClose, type }) {
                     <input
                       type="email"
                       placeholder="Email"
-                      className="rounded-full bg-white/20 px-6 py-4 outline-none"
+                      className="rounded-full bg-white/20 px-6 py-4 outline-none placeholder:text-white/50 backdrop-blur-md"
                       onChange={(e) =>
                         setRegisterData({
                           ...registerData,
@@ -105,7 +155,7 @@ export default function AuthDrawer({ open, onClose, type }) {
                     <input
                       type="text"
                       placeholder="Phone"
-                      className="rounded-full bg-white/20 px-6 py-4 outline-none"
+                      className="rounded-full bg-white/20 px-6 py-4 outline-none placeholder:text-white/50 backdrop-blur-md"
                       onChange={(e) =>
                         setRegisterData({
                           ...registerData,
@@ -118,7 +168,7 @@ export default function AuthDrawer({ open, onClose, type }) {
                   <input
                     type="password"
                     placeholder="Password"
-                    className="rounded-full bg-white/20 px-6 py-4 outline-none"
+                    className="rounded-full bg-white/20 px-6 py-4 outline-none placeholder:text-white/50 backdrop-blur-md"
                     onChange={(e) =>
                       setRegisterData({
                         ...registerData,
@@ -127,11 +177,79 @@ export default function AuthDrawer({ open, onClose, type }) {
                     }
                   />
 
+                  {/* CUSTOM DROPDOWN */}
+                  <div className="relative" ref={roleRef}>
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setRoleOpen(!roleOpen)}
+                      className="w-full rounded-full bg-white/20 px-6 py-4 backdrop-blur-md flex items-center justify-between"
+                    >
+                      <span className="capitalize text-white/90">
+                        {registerData.taype}
+                      </span>
+
+                      <motion.div
+                        animate={{ rotate: roleOpen ? 180 : 0 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        <HiChevronDown className="text-xl text-white/70" />
+                      </motion.div>
+                    </motion.button>
+
+                    <AnimatePresence>
+                      {roleOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.25 }}
+                          className="absolute left-0 mt-3 w-full overflow-hidden rounded-3xl border border-white/10 bg-black/70 backdrop-blur-xl"
+                        >
+                          {roles.map((role, index) => (
+                            <motion.button
+                              key={index}
+                              type="button"
+                              whileHover={{
+                                backgroundColor:
+                                  "rgba(255,255,255,0.08)",
+                              }}
+                              onClick={() => {
+                                setRegisterData({
+                                  ...registerData,
+                                  taype: role,
+                                });
+
+                                setRoleOpen(false);
+                              }}
+                              className={`w-full px-6 py-4 text-left capitalize transition ${
+                                registerData.taype === role
+                                  ? "text-white"
+                                  : "text-white/60"
+                              }`}
+                            >
+                              {role}
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
                   <button
                     type="submit"
-                    className="mt-4 w-fit rounded-full bg-white px-8 py-3 text-black font-semibold"
+                    disabled={loading}
+                    className="mt-4 w-fit rounded-full bg-white px-8 py-3 text-black font-semibold cursor-pointer"
                   >
-                    Submit
+                    {loading ? (
+                      <ClipLoader
+                        size={20}
+                        color="#000"
+                        className="relative top-1"
+                      />
+                    ) : (
+                      "Submit"
+                    )}
                   </button>
                 </form>
               ) : (
@@ -140,7 +258,7 @@ export default function AuthDrawer({ open, onClose, type }) {
                   <input
                     type="email"
                     placeholder="Email"
-                    className="rounded-full bg-white/20 px-6 py-4 outline-none"
+                    className="rounded-full bg-white/20 px-6 py-4 outline-none placeholder:text-white/50 backdrop-blur-md"
                     onChange={(e) =>
                       setLoginData({
                         ...loginData,
@@ -152,7 +270,7 @@ export default function AuthDrawer({ open, onClose, type }) {
                   <input
                     type="password"
                     placeholder="Password"
-                    className="rounded-full bg-white/20 px-6 py-4 outline-none"
+                    className="rounded-full bg-white/20 px-6 py-4 outline-none placeholder:text-white/50 backdrop-blur-md"
                     onChange={(e) =>
                       setLoginData({
                         ...loginData,
@@ -163,9 +281,18 @@ export default function AuthDrawer({ open, onClose, type }) {
 
                   <button
                     type="submit"
-                    className="mt-4 w-fit rounded-full bg-white px-8 py-3 text-black font-semibold"
+                    disabled={loading}
+                    className="mt-4 w-fit rounded-full cursor-pointer bg-white px-8 py-3 text-black font-semibold"
                   >
-                    Login
+                    {loading ? (
+                      <ClipLoader
+                        size={20}
+                        color="#000"
+                        className="relative top-1"
+                      />
+                    ) : (
+                      "Login"
+                    )}
                   </button>
                 </form>
               )}

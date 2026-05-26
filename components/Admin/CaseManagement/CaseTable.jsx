@@ -1,4 +1,5 @@
 "use client";
+
 import { AnimatePresence, motion } from "framer-motion";
 import {
   Check,
@@ -11,6 +12,7 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import ActionMenu from "./ActionMenu";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 
 const CaseTable = ({
   CASE_COLUMNS,
@@ -18,39 +20,72 @@ const CaseTable = ({
   statusConfig,
   STATUS_FILTERS,
   getItems,
-  type=""
+  type = "",
 }) => {
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [filterOpen, setFilterOpen] = useState(false);
+  const [filterPos, setFilterPos] = useState(null);
+
   const [openMenu, setOpenMenu] = useState(null);
-  const [rows, setRows] = useState(INITIAL_CASES);
+  const [rows, setRows] = useState([]);
   const [exported, setExported] = useState(false);
   const [toast, setToast] = useState(null);
+
   const filterRef = useRef(null);
   const router = useRouter();
+
+  // Sync redux/api data
+  useEffect(() => {
+    setRows(INITIAL_CASES || []);
+  }, [INITIAL_CASES]);
+
+  // Normalize data if type === client
+  const normalizedRows =
+    type === "client" || type === "lawyer"
+      ? rows?.map((client) => ({
+          id: client.id,
+          title: client.name,
+          client: client.email,
+          lawyer: client.mobile,
+          rate: client.rate || 5,
+
+          ...(type === "lawyer"
+            ? { email_verified_at: client.email_verified_at }
+            : {}),
+
+          status: client.status || "ACTIVE",
+          created: client.created_at,
+          updated: client.updated_at,
+        }))
+      : rows;
+
   useEffect(() => {
     const handler = (e) => {
-      if (filterRef.current && !filterRef.current.contains(e.target))
+      if (filterRef.current && !filterRef.current.contains(e.target)) {
         setFilterOpen(false);
+      }
     };
+
     document.addEventListener("mousedown", handler);
+
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const showToast = (msg, type = "info") => {
     setToast({ msg, type });
+
     setTimeout(() => setToast(null), 2500);
   };
 
   const displayed =
     statusFilter === "ALL"
-      ? rows
-      : rows.filter((r) => r.status === statusFilter);
+      ? normalizedRows
+      : normalizedRows.filter((r) => r.status === statusFilter);
 
   const handleExport = () => {
     const csv = [
       CASE_COLUMNS.slice(0, -1).join(","),
-      ...displayed.map((r) =>
+      ...displayed?.map((r) =>
         [
           r.id,
           r.title,
@@ -63,21 +98,31 @@ const CaseTable = ({
         ].join(","),
       ),
     ].join("\n");
+
     const blob = new Blob([csv], { type: "text/csv" });
+
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement("a");
+
     a.href = url;
     a.download = "cases.csv";
     a.click();
+
     URL.revokeObjectURL(url);
+
     setExported(true);
+
     setTimeout(() => setExported(false), 2000);
+
     showToast("Cases exported successfully!", "success");
   };
 
   const handleDelete = (id) => {
     setRows((prev) => prev.filter((r) => r.id !== id));
+
     setOpenMenu(null);
+
     showToast(`Case ${id} deleted`, "error");
   };
 
@@ -85,11 +130,16 @@ const CaseTable = ({
     setRows((prev) =>
       prev.map((r) =>
         r.id === id
-          ? { ...r, status: r.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED" }
+          ? {
+              ...r,
+              status: r.status === "SUSPENDED" ? "ACTIVE" : "SUSPENDED",
+            }
           : r,
       ),
     );
+
     setOpenMenu(null);
+
     showToast(`Case ${id} status updated`, "info");
   };
 
@@ -97,9 +147,20 @@ const CaseTable = ({
     setRows((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status: "CLOSED" } : r)),
     );
+
     setOpenMenu(null);
+
     showToast(`Case ${id} force closed`, "success");
   };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -131,8 +192,10 @@ const CaseTable = ({
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
         <div className="flex items-center gap-2">
           <LayoutGrid size={15} className="text-gray-400" />
+
           <div>
             <h2 className="text-sm font-bold text-gray-900">All Cases</h2>
+
             <p className="text-xs text-gray-400 mt-0.5">
               See insights on how your{" "}
               <span className="text-yellow-500 underline underline-offset-1 cursor-pointer">
@@ -142,11 +205,21 @@ const CaseTable = ({
             </p>
           </div>
         </div>
+
         <div className="flex items-center gap-2 self-start">
-          {/* Filter */}
+          {/* FILTER */}
           <div className="relative" ref={filterRef}>
             <button
-              onClick={() => setFilterOpen((p) => !p)}
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+
+                setFilterPos({
+                  top: rect.bottom + window.scrollY,
+                  left: rect.left + window.scrollX,
+                });
+
+                setFilterOpen((p) => !p);
+              }}
               className={`flex items-center gap-1.5 cursor-pointer border rounded-lg px-3 py-1.5 text-xs transition-colors ${
                 filterOpen
                   ? "border-gray-900 bg-gray-900 text-white"
@@ -161,19 +234,26 @@ const CaseTable = ({
                 </span>
               )}
             </button>
-            <AnimatePresence>
-              {filterOpen && (
+
+            {/* 🔥 PORTAL DROPDOWN */}
+            {filterOpen &&
+              filterPos &&
+              createPortal(
                 <motion.div
                   initial={{ opacity: 0, y: -6, scale: 0.97 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.97 }}
-                  transition={{ duration: 0.14 }}
-                  className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-2xl z-50 overflow-hidden"
+                  className="fixed w-48 bg-white border border-gray-100 rounded-xl shadow-2xl z-9999 overflow-hidden"
+                  style={{
+                    top: filterPos.top,
+                    left: filterPos.left,
+                  }}
                 >
                   <div className="px-3 py-2 border-b border-gray-50 flex items-center justify-between">
                     <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
                       Status
                     </span>
+
                     {statusFilter !== "ALL" && (
                       <button
                         onClick={() => setStatusFilter("ALL")}
@@ -183,6 +263,7 @@ const CaseTable = ({
                       </button>
                     )}
                   </div>
+
                   {STATUS_FILTERS.map((f) => (
                     <button
                       key={f}
@@ -197,15 +278,17 @@ const CaseTable = ({
                       }`}
                     >
                       <span>{f === "ALL" ? "All Statuses" : f}</span>
+
                       {statusFilter === f && (
                         <Check size={12} className="text-gray-900" />
                       )}
                     </button>
                   ))}
-                </motion.div>
+                </motion.div>,
+                document.body,
               )}
-            </AnimatePresence>
           </div>
+
           {/* Export */}
           <button
             onClick={handleExport}
@@ -216,35 +299,14 @@ const CaseTable = ({
             }`}
           >
             {exported ? <Check size={13} /> : <Upload size={13} />}
+
             {exported ? "Exported!" : "Export"}
           </button>
         </div>
       </div>
 
-      {/* Active filter chip */}
-      <AnimatePresence>
-        {statusFilter !== "ALL" && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-3"
-          >
-            <span className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-1 rounded-full">
-              Status: {statusFilter}
-              <button
-                onClick={() => setStatusFilter("ALL")}
-                className="text-gray-400 hover:text-gray-700"
-              >
-                <X size={11} />
-              </button>
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Table */}
-      <div className="overflow-x-auto -mx-1">
+      {/* TABLE */}
+      <div className="-mx-1">
         <table className="w-full min-w-225 text-xs">
           <thead>
             <tr className="border-b border-gray-100">
@@ -258,9 +320,10 @@ const CaseTable = ({
               ))}
             </tr>
           </thead>
+
           <tbody>
             <AnimatePresence mode="popLayout">
-              {displayed.length === 0 ? (
+              {displayed?.length === 0 ? (
                 <tr>
                   <td
                     colSpan={9}
@@ -270,40 +333,56 @@ const CaseTable = ({
                   </td>
                 </tr>
               ) : (
-                displayed.map((row, i) => (
+                displayed?.map((row, i) => (
                   <motion.tr
                     key={row.id}
                     layout
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.22, delay: i * 0.04 }}
+                    transition={{
+                      duration: 0.22,
+                      delay: i * 0.04,
+                    }}
                     className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors"
                   >
                     <td className="py-3 px-2 font-mono text-gray-700">
-                      {row.id}
+                      {row.title}
                     </td>
+
                     <td className="py-3 px-2 text-gray-700 max-w-35">
-                      <span className="line-clamp-1">{row.title}</span>
+                      <span className="line-clamp-1">{row.client}</span>
                     </td>
+
                     <td className="py-3 px-2 text-gray-500">{row.client}</td>
-                    <td className="py-3 px-2 text-gray-500">{row.lawyer}</td>
-                    {
-                      type !== "client" && <td className="py-3 px-2 text-gray-500">{row.category}</td>
-                    }
+
+                    <td className="py-3 px-2 text-gray-500">{row.rate}</td>
+
+                    {type !== "client" && type !== "lawyer" && (
+                      <td className="py-3 px-2 text-gray-500">
+                        {row.category}
+                      </td>
+                    )}
+
                     <td className="py-3 px-2">
                       <span
-                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${statusConfig[row.status]}`}
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                          statusConfig[row.status] ||
+                          "bg-gray-100 text-gray-500"
+                        }`}
                       >
-                        {row.status}
+                        {row.status || "UNKNOWN"}
                       </span>
                     </td>
+
                     <td className="py-3 px-2 text-gray-500 whitespace-nowrap">
-                      {row.created}
+                      {formatDate(row.created)}
                     </td>
+
                     <td className="py-3 px-2 text-gray-500 whitespace-nowrap">
-                      {row.updated}
+                      {formatDate(row.updated)}
                     </td>
+
                     <td className="py-3 px-2">
                       <div className="relative">
                         <button
@@ -316,6 +395,7 @@ const CaseTable = ({
                         >
                           <MoreHorizontal size={14} className="text-gray-400" />
                         </button>
+
                         <AnimatePresence>
                           {openMenu === i && (
                             <ActionMenu
@@ -341,7 +421,7 @@ const CaseTable = ({
       </div>
 
       <p className="text-[11px] text-gray-300 mt-3">
-        Showing {displayed.length} of {rows.length} cases
+        Showing {displayed?.length} of {rows?.length} cases
       </p>
     </motion.div>
   );

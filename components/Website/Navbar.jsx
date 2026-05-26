@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { HiArrowUpRight } from "react-icons/hi2";
 import { HiMenu, HiX } from "react-icons/hi";
 import Link from "next/link";
 import AuthDrawer from "./AuthModal";
-
+import { useDispatch, useSelector } from "react-redux";
+import { logout, Updatetoken } from "@/lib/UserAuth";
+import { ClipLoader } from "react-spinners";
 
 const navLinks = [
   { name: "Home", link: "/" },
@@ -18,13 +20,14 @@ const navLinks = [
 ];
 
 export default function Navbar() {
+  const { token, loading } = useSelector((state) => state.UserRTK);
+  const dispatch = useDispatch();
+  const authToken = localStorage.getItem("authToken");
+  const user = JSON.parse(localStorage.getItem("user"));
   const [menuOpen, setMenuOpen] = useState(false);
-
   // AUTH DRAWER STATE
   const [authOpen, setAuthOpen] = useState(false);
-
   const [authType, setAuthType] = useState("register");
-
   // OPEN REGISTER
   const openRegister = () => {
     setAuthType("register");
@@ -36,6 +39,21 @@ export default function Navbar() {
     setAuthType("login");
     setAuthOpen(true);
   };
+
+  const handleLogout = async () => {
+    if (loading) {
+      return;
+    }
+    const result = await dispatch(logout());
+    if (logout.fulfilled.match(result)) {
+      dispatch(Updatetoken(""));
+    }
+  };
+
+  useEffect(() => {
+    dispatch(Updatetoken(authToken));
+  }, [authToken, dispatch]);
+
 
   return (
     <>
@@ -51,10 +69,7 @@ export default function Navbar() {
             <div className="flex items-center gap-1">
               <div className="grid grid-cols-2 gap-0.5 w-5 h-5">
                 {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="w-2 h-2 bg-white rounded-[1px]"
-                  />
+                  <div key={i} className="w-2 h-2 bg-white rounded-[1px]" />
                 ))}
               </div>
 
@@ -88,28 +103,55 @@ export default function Navbar() {
         </ul>
 
         {/* DESKTOP BUTTONS */}
-        <div className="hidden md:flex items-center gap-2">
-          {/* REGISTER */}
-          <button
-            onClick={openRegister}
-            className="px-4 py-2 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition"
-          >
-            SIGN UP
-          </button>
+        {!token ? (
+          <div className="hidden md:flex items-center gap-2">
+            {/* REGISTER */}
+            <button
+              onClick={openRegister}
+              className="px-4 py-2 rounded-full bg-white text-black text-sm font-semibold hover:bg-white/90 transition"
+            >
+              SIGN UP
+            </button>
 
-          {/* LOGIN */}
-          <button
-            onClick={openLogin}
-            className="px-4 py-2 rounded-full border border-white/30 text-white text-sm font-semibold hover:border-white transition"
-          >
-            SIGN IN
-          </button>
+            {/* LOGIN */}
+            <button
+              onClick={openLogin}
+              className="px-4 py-2 rounded-full border border-white/30 text-white text-sm font-semibold hover:border-white transition"
+            >
+              SIGN IN
+            </button>
 
-          {/* ARROW */}
-          <button className="w-8 h-8 rounded-full bg-[#E8C547] flex items-center justify-center">
-            <HiArrowUpRight className="text-black text-sm" />
-          </button>
-        </div>
+            {/* ARROW */}
+            <button className="w-8 h-8 rounded-full bg-[#E8C547] flex items-center justify-center">
+              <HiArrowUpRight className="text-black text-sm" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-4">
+            <Link
+              href={
+                user.type === "avocato"
+                  ? `/lawyer-dashboard`
+                  : user.type === "admin"
+                    ? `/admin-dashboard`
+                    : `/user-dashboard`
+              }
+              className="px-4 py-2 rounded-full bg-[#E8C547] cursor-pointer text-black text-sm font-semibold hover:bg-[#E8C547]/90 transition"
+            >
+              DashBoard
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-full cursor-pointer border border-white/30 text-white text-sm font-semibold hover:border-white transition"
+            >
+              {loading ? (
+                <ClipLoader size={20} color="#fff" className="relative top-1" />
+              ) : (
+                "Logout"
+              )}
+            </button>
+          </div>
+        )}
 
         {/* MOBILE MENU BUTTON */}
         <button
