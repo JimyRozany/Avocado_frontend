@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -55,7 +55,11 @@ const CaseManagement = () => {
   const { CaseDataDetails, loading, CaseData, CaseDataOverFlow } = useSelector(
     (state) => state.CaseRTK,
   );
-  const user = JSON.parse(localStorage.getItem("user"));
+    const [user, setuser] = useState("");
+
+useEffect(() => {
+  setuser(JSON.parse(localStorage.getItem("user")) || "");
+}, []);
 
   const { DataCases, OverviewData } = useSelector((state) => state.LawyerRTK);
   const CASE_STATS = [

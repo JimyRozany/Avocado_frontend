@@ -1,7 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
 import { HiArrowUpRight } from "react-icons/hi2";
-import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import pexels from "../../../public/Image/corridor-church-la-madeleine.png"
@@ -103,8 +102,6 @@ export default function ExpertiseSection({type=""}) {
           </div>
         </div>
       </div>
-
-      {/* Lawyers */}
 
       </div>
     </section>

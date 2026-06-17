@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
@@ -11,7 +11,6 @@ import {
   CartesianGrid,
 } from "recharts";
 import { LayoutGrid, ChevronDown } from "lucide-react";
-
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -30,8 +29,14 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-export default function CaseActivityChart({ CaseChatData=[] }) {
-  const [range, setRange] = useState("Last 90 Days");
+export default function CaseActivityChart({ CaseChatData = [] }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
   const data = CaseChatData?.map((item) => ({
     date: new Date(`${item.month}-01`).toLocaleDateString("en-US", {
       month: "short",

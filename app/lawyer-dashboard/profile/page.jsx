@@ -122,7 +122,11 @@ export default function LawyerProfile() {
     WarningData,
     RatingData
   } = useSelector((state) => state.LawyerRTK);
-  const user = JSON.parse(localStorage.getItem("user"));
+    const [user, setuser] = useState("");
+
+useEffect(() => {
+  setuser(JSON.parse(localStorage.getItem("user")) || "");
+}, []);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(() =>
     mapLawyerData(LawyerDataDetails),

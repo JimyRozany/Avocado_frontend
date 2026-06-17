@@ -1,6 +1,7 @@
 "use client";
 
 import { BadgeDollarSign, CakeSlice, Wallet } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -45,6 +46,13 @@ const CustomTooltip = ({ active, payload }) => {
 };
 
 export default function EarningsChart() {
+  const [mounted, setMounted] = useState(false);
+
+useEffect(() => {
+  setMounted(true);
+}, []);
+
+if (!mounted) return null;
   return (
     <div className="bg-white rounded-3xl border mt-5 border-gray-100 p-8 w-full">
       <div className="grid grid-cols-[280px_1fr] gap-8">
