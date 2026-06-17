@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-
+import interior from "../../../public/Image/interior-cathedral.png"
 export default function LegalHero() {
   return (
     <section className="relative h-95 w-[90%] mx-auto overflow-hidden">

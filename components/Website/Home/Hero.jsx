@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { useRouter } from "next/navigation";
 import DefaultUser from "../../../public/Image/DefaultUser.jpg";
-import pexels from "../../../public/Image/pexels-pavel-danilyuk-8112198.jpg";
+import pexels from "../../../public/Image/interior-cathedral.png";
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 30 },
   animate: { opacity: 1, y: 0 },

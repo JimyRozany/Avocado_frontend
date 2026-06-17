@@ -4,7 +4,7 @@ import { HiArrowUpRight } from "react-icons/hi2";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import pexels from "../../../public/Image/pexels-mikhail-nilov-8730275.jpg"
+import pexels from "../../../public/Image/corridor-church-la-madeleine.png"
 const stats = [
   { value: "+850", label: "Cases Managed" },
   { value: "+120", label: "Registered Lawyers" },
@@ -65,7 +65,7 @@ export default function ExpertiseSection({type=""}) {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
-          className="h-55 rounded-2xl overflow-hidden relative bg-[#333]"
+          className="h-120 rounded-2xl overflow-hidden relative bg-[#333]"
         >
           <Image src={pexels} alt="Courthouse columns" fill className="object-cover" />
         </motion.div>
