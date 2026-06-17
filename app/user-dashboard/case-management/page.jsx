@@ -52,11 +52,7 @@ const CASE_COLUMNS = [
 ];
 
 const CaseManagement = () => {
-    const [user, setuser] = useState("");
-
-useEffect(() => {
-  setuser(JSON.parse(localStorage.getItem("user")) || "");
-}, []);
+const { UserData } = useSelector((state) => state.UserRTK);
   const { OverviewData, DataCases } = useSelector((state) => state.ClientRTK);
   const CASE_STATS = [
     {
@@ -134,10 +130,13 @@ useEffect(() => {
   ];
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(GetmyCases(user.id));
+    if(UserData?.id === undefined){
+      return
+    }
+    dispatch(GetmyCases(UserData.id));
     dispatch(GetOverFlowCase());
-    dispatch(GetClientOverview(user.id));
-  }, [dispatch]);
+    dispatch(GetClientOverview(UserData.id));
+  }, [UserData.id, dispatch]);
 
   return (
     <div>

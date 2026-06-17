@@ -1,6 +1,7 @@
 // components/LawLibrarySection.jsx
 "use client";
 
+import PopupChatBot from "@/components/PopupChatBot";
 import Footer from "@/components/Website/Footer";
 import Navbar from "@/components/Website/Navbar";
 import { GetLegal } from "@/lib/LegalManagement";
@@ -216,6 +217,7 @@ export default function LawLibrarySection() {
           </div>
         </div>
       </section>
+      <PopupChatBot />
       <Footer />
     </>
   );

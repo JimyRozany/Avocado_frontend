@@ -94,11 +94,7 @@ const mapLawyerData = (apiData) => {
 };
 
 export default function ClientProfile() {
-    const [user, setuser] = useState("");
-
-useEffect(() => {
-  setuser(JSON.parse(localStorage.getItem("user")) || "");
-}, []);
+const { UserData } = useSelector((state) => state.UserRTK);
   const { ClientDataDetails, OverviewData, WarningData } = useSelector(
     (state) => state.ClientRTK,
   );
@@ -161,11 +157,14 @@ useEffect(() => {
   }, [ClientDataDetails, WarningData?.warnings]);
 
   useEffect(() => {
-    dispatch(GetClientDetails(user.id));
-    dispatch(GetClientOverview(user.id));
+    if(UserData?.id === undefined){
+      return
+    }
+    dispatch(GetClientDetails(UserData.id));
+    dispatch(GetClientOverview(UserData.id));
     // dispatch(GetDocument());
-    dispatch(GetWarningUser(user.id));
-  }, [dispatch]);
+    dispatch(GetWarningUser(UserData.id));
+  }, [UserData.id, dispatch]);
 
   const handleEdit = () => {
     setTempData(formData);
@@ -200,7 +199,7 @@ useEffect(() => {
 
       await dispatch(
         UpdateClient({
-          id: user.id,
+          id: UserData?.id,
           data: formData,
         }),
       );

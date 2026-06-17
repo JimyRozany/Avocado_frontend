@@ -22,17 +22,16 @@ const AdminMain = () => {
   );
   const { CaseChatData } = useSelector((state) => state.HomeRTK);
 
-    const [user, setuser] = useState("");
-
-useEffect(() => {
-  setuser(JSON.parse(localStorage.getItem("user")) || "");
-}, []);
+const { UserData } = useSelector((state) => state.UserRTK);
   const dispatch = useDispatch();
   useEffect(() => {
+    if(UserData?.id === undefined){
+      return
+    }
     dispatch(GetClient());
-    dispatch(GetClientOverview(user.id));
+    dispatch(GetClientOverview(UserData.id));
     dispatch(getCaseChart());
-  }, [dispatch]);
+  }, [UserData.id, dispatch]);
 
   const CASE_STATS = [
     {

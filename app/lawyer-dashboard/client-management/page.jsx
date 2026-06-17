@@ -60,11 +60,7 @@ const Case = () => {
   const { loadingWarning, OverviewData } = useSelector(
     (state) => state.LawyerRTK,
   );
-    const [user, setuser] = useState("");
-
-useEffect(() => {
-  setuser(JSON.parse(localStorage.getItem("user")) || "");
-}, []);
+  const { UserData } = useSelector((state) => state.UserRTK);
   const [warningOpen, setWarningOpen] = useState(false);
   const [warningText, setWarningText] = useState("");
   const [selectedLawyerId, setSelectedLawyerId] = useState(null);
@@ -144,9 +140,12 @@ useEffect(() => {
   };
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(GetMyClient(user?.id));
+    if(UserData?.id === undefined){
+      return
+    }
+    dispatch(GetMyClient(UserData?.id));
     dispatch(GetLawyerOverviewSepcial());
-  }, [dispatch]);
+  }, [UserData, UserData?.id, dispatch]);
 
   const HandleWarning = async () => {
     if (loadingWarning) {

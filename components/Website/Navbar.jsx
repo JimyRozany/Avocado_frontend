@@ -7,7 +7,7 @@ import { HiMenu, HiX } from "react-icons/hi";
 import Link from "next/link";
 import AuthDrawer from "./AuthModal";
 import { useDispatch, useSelector } from "react-redux";
-import { logout, Updatetoken } from "@/lib/UserAuth";
+import { GetUser, logout, Updatetoken } from "@/lib/UserAuth";
 import { ClipLoader } from "react-spinners";
 import { usePathname } from "next/navigation";
 
@@ -23,14 +23,12 @@ const navLinks = [
 export default function Navbar() {
   const { token, loading } = useSelector((state) => state.UserRTK);
   const dispatch = useDispatch();
-  const [authToken, setauthToken] = useState();
+  const [authToken,setauthToken] =useState("")
+  useEffect(()=>{
+    setauthToken(localStorage.getItem("authToken"))
+  },[])
   const pathname = usePathname();
-  const [user, setUser] = useState();
-  useEffect(() => {
-    setUser(JSON.parse(localStorage.getItem("user")));
-    setauthToken(localStorage.getItem("authToken"));
-  }, [token]);
-
+  const { UserData } = useSelector((state) => state.UserRTK);
   const [menuOpen, setMenuOpen] = useState(false);
   // AUTH DRAWER STATE
   const [authOpen, setAuthOpen] = useState(false);
@@ -54,13 +52,16 @@ export default function Navbar() {
     const result = await dispatch(logout());
     if (logout.fulfilled.match(result)) {
       dispatch(Updatetoken(""));
-      setUser("");
     }
   };
 
   useEffect(() => {
     dispatch(Updatetoken(authToken));
-  }, [authToken, dispatch]);
+  }, [dispatch, authToken]);
+
+  useEffect(()=>{
+        dispatch(GetUser());
+  },[token])
 
   return (
     <>
@@ -137,9 +138,9 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <Link
               href={
-                user?.type === "avocato"
+                UserData?.type === "avocato"
                   ? `/lawyer-dashboard`
-                  : user?.type === "admin"
+                  : UserData?.type === "admin"
                     ? `/admin-dashboard`
                     : `/user-dashboard`
               }

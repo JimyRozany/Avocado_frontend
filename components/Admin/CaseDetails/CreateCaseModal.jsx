@@ -12,14 +12,10 @@ import { ClipLoader } from "react-spinners";
 export default function CreateCaseModalCompact({ onClose }) {
   const { ClientData } = useSelector((state) => state.ClientRTK);
   const { LawyerData } = useSelector((state) => state.LawyerRTK);
-    const [user, setuser] = useState("");
-
-useEffect(() => {
-  setuser(JSON.parse(localStorage.getItem("user")) || "");
-}, []);
-  const isAdmin = user?.type === "admin";
-  const isLawyer = user?.type === "avocato";
-  const isUser = user?.type === "client";
+const { UserData } = useSelector((state) => state.UserRTK);
+  const isAdmin = UserData?.type === "admin";
+  const isLawyer = UserData?.type === "avocato";
+  const isUser = UserData?.type === "client";
   const dispatch = useDispatch();
   const fileRef = useRef(null);
 

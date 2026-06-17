@@ -85,6 +85,8 @@ export default function ReviewsListCard({ reviews = [] }) {
                         <Image
                           src={r?.reviewer?.image}
                           alt={r?.reviewer?.name || "User"}
+                          width={500}
+                          height={500}
                           className="w-full h-full object-cover"
                         />
                       ) : (

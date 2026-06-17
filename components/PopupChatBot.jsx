@@ -24,11 +24,9 @@ const PopupChatBot = () => {
 
   const [input, setInput] = useState("");
   const [loadingChat, setLoadingChat] = useState(false);
-  const [user, setUser] = useState();
+
   const messagesEndRef = useRef(null);
-  useEffect(() => {
-    setUser(JSON.parse(localStorage.getItem("user")));
-  }, [token]);
+  const { UserData } = useSelector((state) => state.UserRTK);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
@@ -87,6 +85,8 @@ const PopupChatBot = () => {
 
     setLoadingChat(false);
   };
+
+  
   return (
     <div dir="ltr">
       {/* Overlay */}
@@ -197,7 +197,9 @@ const PopupChatBot = () => {
                 <div className="flex  gap-2 mb-3 overflow-x-auto scrollbar-hide">
                   <button
                     onClick={() =>
-                      sendMessage("ما هي إجراءات رفع دعوى مدنية في القانون المصري ؟")
+                      sendMessage(
+                        "ما هي إجراءات رفع دعوى مدنية في القانون المصري ؟",
+                      )
                     }
                     className="whitespace-nowrap cursor-pointer px-4 py-2 rounded-full bg-[#f3f4f8] text-gray-700 text-xs hover:bg-[#e9ebf3] transition"
                   >
@@ -247,22 +249,23 @@ const PopupChatBot = () => {
         </AnimatePresence>
 
         {/* Floating Button */}
-        {user && (
-          <button
-            onClick={() => {
-              if (isDragging) return;
-              setShowChat(!showChat);
-            }}
-            className="bg-linear-to-r from-white to-white  w-14 h-14 rounded-full flex items-center justify-center  cursor-pointer"
-          >
-            <Image
-              draggable={false}
-              src={chatBotChat}
-              alt="chatbot"
-              className="w-8 h-8"
-            />
-          </button>
-        )}
+        {(UserData !== undefined &&
+          (Object.keys(UserData).length > 0) && (
+            <button
+              onClick={() => {
+                if (isDragging) return;
+                setShowChat(!showChat);
+              }}
+              className="bg-linear-to-r from-white to-white  w-14 h-14 rounded-full flex items-center justify-center  cursor-pointer"
+            >
+              <Image
+                draggable={false}
+                src={chatBotChat}
+                alt="chatbot"
+                className="w-8 h-8"
+              />
+            </button>
+          ))}
       </motion.div>
     </div>
   );

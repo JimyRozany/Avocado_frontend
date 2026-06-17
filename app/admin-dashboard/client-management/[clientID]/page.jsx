@@ -97,11 +97,7 @@ export default function ClientProfile() {
   const { ClientDataDetails, OverviewData, WarningData, loadingWarning } =
     useSelector((state) => state.ClientRTK);
 
-  const [user, setuser] = useState("");
-
-  useEffect(() => {
-    setuser(JSON.parse(localStorage.getItem("user")) || "");
-  }, []);
+const { UserData } = useSelector((state) => state.UserRTK);
   const [avatarFile, setAvatarFile] = useState(null);
   const dispatch = useDispatch();
   const { clientID } = useParams();
@@ -239,7 +235,7 @@ export default function ClientProfile() {
     <div className=" font-['Instrument_Sans',sans-serif]">
       {/* Top Bar */}
       <StatsCards stats={CASE_STATS} />
-      {user?.type !== "admin" && (
+      {UserData?.type !== "admin" && (
         <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-200  py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <AnimatePresence mode="wait">

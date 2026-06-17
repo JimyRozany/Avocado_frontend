@@ -55,11 +55,7 @@ const CaseManagement = () => {
   const { CaseDataDetails, loading, CaseData, CaseDataOverFlow } = useSelector(
     (state) => state.CaseRTK,
   );
-    const [user, setuser] = useState("");
-
-useEffect(() => {
-  setuser(JSON.parse(localStorage.getItem("user")) || "");
-}, []);
+const { UserData } = useSelector((state) => state.UserRTK);
 
   const { DataCases, OverviewData } = useSelector((state) => state.LawyerRTK);
   const CASE_STATS = [
@@ -134,10 +130,13 @@ useEffect(() => {
   ];
   const dispatch = useDispatch();
   useEffect(() => {
-    dispatch(GetmyCases(user?.id));
+    if(UserData?.id === undefined){
+      return
+    }
+    dispatch(GetmyCases(UserData?.id));
     dispatch(GetOverFlowCase());
     dispatch(GetLawyerOverviewSepcial());
-  }, [dispatch, user?.id]);
+  }, [dispatch, UserData?.id]);
 
   return (
     <div>
