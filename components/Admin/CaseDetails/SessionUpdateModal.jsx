@@ -2,42 +2,64 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
+import { useDispatch } from "react-redux";
+import { createSession } from "@/lib/CaseManagement";
 
-const existingSessions = [
-  {
-    id: 1,
-    text: "The hearing was held today, and the case was adjourned until July 15 to request an additional document.",
-    by: "Bahr Adam",
-    date: "02 Jun 2025",
-  },
-  {
-    id: 2,
-    text: "The hearing was held today, and the case was adjourned until July 15 to request an additional document.",
-    by: "Bahr Adam",
-    date: "02 Jun 2025",
-  },
-];
+export default function SessionUpdateModal({
+  mode = "session",
+  onClose,
+  CaseDataDetails,
+}) {
+  const dispatch = useDispatch();
 
-export default function SessionUpdateModal({ mode = "session", onClose }) {
-  const [description, setDescription] = useState("");
+  const [sessionDate, setSessionDate] = useState("");
+  const [decision, setDecision] = useState("");
+  const [notes, setNotes] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState([]);
   const [saved, setSaved] = useState(false);
+
   const fileRef = useRef(null);
 
   const isDoc = mode === "document";
-  const title = isDoc ? "Upload Document" : "Session Updates";
+  const title = isDoc ? "Upload Document" : "Session Update";
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     setUploadedFiles((prev) => [...prev, ...files]);
   };
 
-  const handleSave = () => {
-    if (!description.trim() && uploadedFiles.length === 0) return;
-    setSaved(true);
-    setTimeout(() => onClose(), 1500);
+  const removeFile = (index) => {
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handleSave = async () => {
+    if (!sessionDate || !decision) return;
+
+    try {
+      const formData = new FormData();
+
+      // REQUIRED FIELDS (match Postman exactly)
+      formData.append("case_id", CaseDataDetails?.id);
+      formData.append("session_date", sessionDate);
+      formData.append("decision", decision);
+      formData.append("notes", notes);
+
+      // IMPORTANT: DO NOT SEND next_session_date
+
+      // FILES
+      if (uploadedFiles.length > 0) {
+        formData.append("documents[0]", uploadedFiles[0]);
+      }
+
+      await dispatch(createSession(formData)).unwrap();
+
+      setSaved(true);
+      setTimeout(() => onClose(), 1200);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -52,73 +74,74 @@ export default function SessionUpdateModal({ mode = "session", onClose }) {
         exit={{ scale: 0.9, opacity: 0, y: 24 }}
         transition={{ type: "spring", stiffness: 300, damping: 28 }}
         onClick={(e) => e.stopPropagation()}
-        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl relative"
+        className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl"
       >
         {saved ? (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-3 py-10"
-          >
-            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl">✓</div>
-            <p className="text-lg font-bold text-gray-900">{isDoc ? "Document Uploaded" : "Session Saved"}</p>
-          </motion.div>
+          <div className="flex flex-col items-center gap-3 py-10">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center text-3xl">
+              ✓
+            </div>
+            <p className="text-lg font-bold text-gray-900">
+              Session Saved Successfully
+            </p>
+          </div>
         ) : (
           <>
             <h2 className="text-2xl font-bold text-gray-900 mb-5">{title}</h2>
 
-            {/* Description */}
-            <div className="border border-gray-200 rounded-xl p-4 bg-gray-50 mb-4">
-              <textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder={isDoc ? "Add a note about this document..." : "Description"}
-                className="w-full bg-transparent text-sm text-gray-700 placeholder-gray-400 resize-none focus:outline-none min-h-[72px]"
+            {/* SESSION DATE */}
+            <input
+              type="date"
+              value={sessionDate}
+              onChange={(e) => setSessionDate(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl p-3 mb-3 text-sm"
+            />
+
+            {/* DECISION */}
+            <input
+              value={decision}
+              onChange={(e) => setDecision(e.target.value)}
+              placeholder="Decision"
+              className="w-full border border-gray-200 rounded-xl p-3 mb-3 text-sm"
+            />
+
+            {/* NOTES */}
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Notes..."
+              className="w-full border border-gray-200 rounded-xl p-3 mb-3 text-sm min-h-[80px]"
+            />
+
+            {/* FILE UPLOAD */}
+            <div className="mb-4">
+              <input
+                type="file"
+                ref={fileRef}
+                className="hidden"
+                onChange={handleFileChange}
               />
+
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm"
+              >
+                Upload Document
+              </button>
             </div>
 
-            {/* Existing sessions/docs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-              {existingSessions.map((s) => (
-                <div
-                  key={s.id}
-                  className="border border-gray-100 rounded-xl px-4 py-3 bg-gray-50 flex flex-col gap-1"
-                >
-                  <p className="text-sm text-gray-700 leading-relaxed">{s.text}</p>
-                  <div className="flex gap-3 text-xs text-gray-400 mt-1">
-                    <span>By: <span className="text-gray-600">{s.by}</span></span>
-                    <span>Date: <span className="text-gray-600">{s.date}</span></span>
-                  </div>
-                  <div className="flex gap-1 mt-1 self-end">
-                    <button className="p-1 rounded text-gray-400 hover:text-amber-500 transition">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                    </button>
-                    <button className="p-1 rounded text-gray-400 hover:text-gray-700 transition">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <circle cx="5" cy="12" r="1.5" />
-                        <circle cx="12" cy="12" r="1.5" />
-                        <circle cx="19" cy="12" r="1.5" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Uploaded files list */}
+            {/* FILE LIST */}
             {uploadedFiles.length > 0 && (
-              <div className="mb-4 flex flex-wrap gap-2">
-                {uploadedFiles.map((f, i) => (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {uploadedFiles.map((file, i) => (
                   <span
                     key={i}
-                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-medium"
+                    className="px-3 py-1 bg-amber-100 text-amber-800 rounded-full text-xs flex items-center gap-2"
                   >
-                    📎 {f.name}
+                    📎 {file.name}
                     <button
-                      onClick={() => setUploadedFiles((prev) => prev.filter((_, idx) => idx !== i))}
-                      className="ml-1 text-amber-600 hover:text-red-500"
+                      onClick={() => removeFile(i)}
+                      className="text-red-500"
                     >
                       ✕
                     </button>
@@ -127,38 +150,21 @@ export default function SessionUpdateModal({ mode = "session", onClose }) {
               </div>
             )}
 
-            <div className="flex justify-end gap-3 mt-2">
-              <input
-                type="file"
-                ref={fileRef}
-                className="hidden"
-                multiple
-                onChange={handleFileChange}
-              />
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => fileRef.current?.click()}
-                className="px-5 py-2.5 rounded-xl bg-gray-900 text-white font-semibold text-sm hover:bg-gray-700 transition"
-              >
-                Upload
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+            {/* ACTIONS */}
+            <div className="flex justify-end gap-3">
+              <button
                 onClick={onClose}
-                className="px-5 py-2.5 rounded-xl bg-red-500 text-white font-semibold text-sm hover:bg-red-600 transition"
+                className="px-5 py-2 rounded-xl bg-red-500 text-white text-sm"
               >
                 Cancel
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
+              </button>
+
+              <button
                 onClick={handleSave}
-                className="px-5 py-2.5 rounded-xl bg-gray-900 text-white font-semibold text-sm hover:bg-gray-700 transition"
+                className="px-5 py-2 rounded-xl bg-gray-900 text-white text-sm"
               >
                 Save
-              </motion.button>
+              </button>
             </div>
           </>
         )}

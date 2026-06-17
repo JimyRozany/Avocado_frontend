@@ -1,42 +1,103 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import LawRulesTable from "@/components/Admin/LegalManagment/LawRulesTable";
+import { useDispatch, useSelector } from "react-redux";
+import { CreateLegal, GetLegal, UpdateLegal } from "@/lib/LegalManagement";
+import { ChevronDown } from "lucide-react";
 
 export default function CreateLawPage() {
-  const [rules, setRules] = useState([]);
-
+  const { loading, loadingAction, LegalData } = useSelector(
+    (state) => state.LegalRTK,
+  );
+  const [editingRule, setEditingRule] = useState(null);
   const [form, setForm] = useState({
     lawName: "",
     ruleNumber: "",
     description: "",
   });
-
+  const dispatch = useDispatch();
   const [saved, setSaved] = useState(false);
+  const [openLawDropdown, setOpenLawDropdown] = useState(false);
+  const lawDropdownRef = useRef(null);
 
+  const laws = [
+    "القانون المدني",
+    "القانون التجاري",
+    "قانون العقوبات",
+    "قانون الأسرة",
+    "قانون الإجراءات الجنائية",
+  ];
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.lawName || !form.ruleNumber) return;
 
-    const newRule = {
-      id: Date.now(),
-      ...form,
+    const data = {
+      rule_description: form.description,
+      rule_number: form.ruleNumber,
+      name: form.lawName,
     };
 
-    setRules((prev) => [newRule, ...prev]);
+    let result;
 
-    console.log("📘 LAW DATA:", newRule);
+    if (editingRule) {
+      result = await dispatch(
+        UpdateLegal({
+          id: editingRule.id,
+          data,
+        }),
+      );
+    } else {
+      result = await dispatch(CreateLegal(data));
+    }
+
+    if (
+      CreateLegal.fulfilled.match(result) ||
+      UpdateLegal.fulfilled.match(result)
+    ) {
+      setForm({
+        lawName: "",
+        ruleNumber: "",
+        description: "",
+      });
+
+      setEditingRule(null);
+    }
+  };
+
+  useEffect(() => {
+    dispatch(GetLegal());
+  }, [dispatch]);
+  const handleEdit = (rule) => {
+    setEditingRule(rule);
 
     setForm({
-      lawName: "",
-      ruleNumber: "",
-      description: "",
+      lawName: rule.name,
+      ruleNumber: rule.rule_number,
+      description: rule.rule_description,
     });
   };
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (
+        lawDropdownRef.current &&
+        !lawDropdownRef.current.contains(e.target)
+      ) {
+        setOpenLawDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <>
@@ -53,18 +114,93 @@ export default function CreateLawPage() {
               </h2>
 
               {/* 🔹 Law Name */}
-              <Input
-                placeholder="Law name (e.g. القانون المدني)"
-                value={form.lawName}
-                onChange={(v) => handleChange("lawName", v)}
-              />
+              <div ref={lawDropdownRef} className="relative mt-3">
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setOpenLawDropdown(!openLawDropdown)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-white transition-all"
+                >
+                  <span
+                    className={`text-sm ${
+                      form.lawName ? "text-gray-700" : "text-gray-400"
+                    }`}
+                  >
+                    {form.lawName || "اختر القانون"}
+                  </span>
+
+                  <motion.div
+                    animate={{
+                      rotate: openLawDropdown ? 180 : 0,
+                    }}
+                    transition={{
+                      duration: 0.2,
+                    }}
+                  >
+                    <ChevronDown size={18} className="text-gray-400" />
+                  </motion.div>
+                </motion.button>
+
+                <AnimatePresence>
+                  {openLawDropdown && (
+                    <motion.div
+                      initial={{
+                        opacity: 0,
+                        y: -10,
+                        scale: 0.97,
+                      }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        scale: 1,
+                      }}
+                      exit={{
+                        opacity: 0,
+                        y: -10,
+                        scale: 0.97,
+                      }}
+                      transition={{
+                        duration: 0.2,
+                      }}
+                      className="absolute left-0 right-0 mt-2 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl z-50"
+                    >
+                      {laws.map((law, index) => (
+                        <motion.button
+                          key={law}
+                          initial={{
+                            opacity: 0,
+                            x: -10,
+                          }}
+                          animate={{
+                            opacity: 1,
+                            x: 0,
+                          }}
+                          transition={{
+                            delay: index * 0.03,
+                          }}
+                          onClick={() => {
+                            handleChange("lawName", law);
+                            setOpenLawDropdown(false);
+                          }}
+                          className={`w-full px-4 py-3 text-right text-sm transition-all
+            ${
+              form.lawName === law
+                ? "bg-amber-50 text-amber-600 font-medium"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+                        >
+                          {law}
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               {/* 🔹 Rule Number */}
               <Input
                 placeholder="Rule number (e.g. 101)"
                 value={form.ruleNumber}
                 onChange={(v) => handleChange("ruleNumber", v)}
-                type="number"
               />
 
               {/* 🔹 Description */}
@@ -82,7 +218,7 @@ export default function CreateLawPage() {
                 onClick={handleSave}
                 className="mt-5 w-full py-2.5 rounded-xl bg-gray-900 text-white font-semibold text-sm hover:bg-gray-700 transition"
               >
-                Save
+                {editingRule ? "Update" : "Save"}
               </motion.button>
             </>
           ) : (
@@ -100,9 +236,8 @@ export default function CreateLawPage() {
             </motion.div>
           )}
         </motion.div>
-        <LawRulesTable rules={rules} />
+        <LawRulesTable rules={LegalData?.data} onEdit={handleEdit} />
       </div>
-      
     </>
   );
 }

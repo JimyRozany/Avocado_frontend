@@ -48,7 +48,7 @@ export default function LegalHero() {
           transition={{ delay: 0.4, duration: 0.7 }}
           className="mt-8 flex items-center gap-4"
         >
-          <Link
+          {/* <Link
             href="/signup"
             className="rounded-full bg-black px-7 py-3 text-sm font-medium text-white transition hover:bg-white hover:text-black"
           >
@@ -60,7 +60,7 @@ export default function LegalHero() {
             className="rounded-full border border-white/20 bg-black/40 px-7 py-3 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white hover:text-black"
           >
             SIGN IN
-          </Link>
+          </Link> */}
 
           <motion.div whileHover={{ rotate: 45, scale: 1.1 }}>
             <Link

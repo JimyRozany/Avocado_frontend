@@ -4,8 +4,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown, ArrowUpRight } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { CreateForm } from "@/lib/Home";
+import { ClipLoader } from "react-spinners";
 
 export default function ContactForm() {
+  const { loading } = useSelector((state) => state.HomeRTK);
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -24,21 +29,23 @@ export default function ContactForm() {
   };
 
   // Submit Form
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // PRINT OBJECT
-    console.log(formData);
-
-    /*
-      OUTPUT:
-      {
-        fullName: "John",
-        email: "john@gmail.com",
-        mobileNumber: "123456789",
-        message: "Hello"
-      }
-    */
+    const data = {
+      full_name: formData.fullName,
+      email:formData.email,
+      mobile: formData.mobileNumber,
+      message:formData.message,
+    };
+    const result = await dispatch(CreateForm(data));
+    if (CreateForm.fulfilled.match(result)) {
+      setFormData({
+        fullName: "",
+        email: "",
+        mobileNumber: "",
+        message: "",
+      });
+    }
   };
 
   return (
@@ -94,17 +101,17 @@ export default function ContactForm() {
 
       {/* Submit */}
       <div className="flex justify-end">
-        <button
-          type="submit"
-          className="group flex items-center gap-3"
-        >
-          <span className="rounded-full bg-white px-7 py-3 text-xs font-semibold tracking-wide text-black transition-all duration-300 group-hover:bg-yellow-400">
+        <button type="submit" className="group flex items-center gap-3">
+          <span className="rounded-full bg-white px-7 py-3 text-xs flex cursor-pointer items-center gap-1 font-semibold tracking-wide text-black transition-all duration-300 group-hover:bg-yellow-400">
+            {loading && (
+              <ClipLoader size={20} color="#000" className="relative" />
+            )}
             SEND
           </span>
 
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1a1a1a] transition-all duration-300 group-hover:bg-yellow-400 group-hover:text-black">
+          {/* <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1a1a1a] transition-all duration-300 group-hover:bg-yellow-400 group-hover:text-black">
             <ArrowUpRight size={16} />
-          </span>
+          </span> */}
         </button>
       </div>
     </motion.form>
@@ -112,13 +119,7 @@ export default function ContactForm() {
 }
 
 /* Reusable Input */
-function Input({
-  name,
-  placeholder,
-  value,
-  onChange,
-  type = "text",
-}) {
+function Input({ name, placeholder, value, onChange, type = "text" }) {
   return (
     <input
       type={type}

@@ -10,7 +10,7 @@ const StatsCards = ({ stats }) => {
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
       {stats.map((stat, i) => {
         const Icon = stat.icon;
-        const isNeg = stat.change.startsWith("-");
+        const isNeg = stat?.change?.startsWith("-");
         return (
           <motion.div
             key={stat.label}

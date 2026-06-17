@@ -1,12 +1,40 @@
 "use client";
 
+import { DeleteLegal } from "@/lib/LegalManagement";
 import { motion, AnimatePresence } from "framer-motion";
 import { MoreHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { ClipLoader } from "react-spinners";
 
-export default function LawRulesTable({ rules }) {
+export default function LawRulesTable({ rules , onEdit }) {
+  const { loadingAction } = useSelector((state) => state.LegalRTK);
   const [openMenu, setOpenMenu] = useState(null);
+  const menuRef = useRef(null);
+  const dispatch = useDispatch();
+  const HandleDelete = async (id) => {
+    if (loadingAction) {
+      return;
+    }
+    const result = await dispatch(DeleteLegal(id));
+    if (DeleteLegal.fulfilled.match(result)) {
+      setOpenMenu(null);
+    }
+  };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setOpenMenu(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -22,7 +50,7 @@ export default function LawRulesTable({ rules }) {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-gray-100">
@@ -39,16 +67,16 @@ export default function LawRulesTable({ rules }) {
             </tr>
           </thead>
 
-          <tbody>
+          <tbody className="">
             <AnimatePresence mode="popLayout">
-              {rules.length === 0 ? (
+              {rules?.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="text-center py-8 text-gray-300">
                     No rules added yet
                   </td>
                 </tr>
               ) : (
-                rules.map((rule, i) => (
+                rules?.map((rule, i) => (
                   <motion.tr
                     key={rule.id}
                     layout
@@ -58,19 +86,21 @@ export default function LawRulesTable({ rules }) {
                     transition={{ delay: i * 0.04 }}
                     className="border-b border-gray-50 hover:bg-gray-50/60 transition"
                   >
-                    <td className="py-3 px-2 text-gray-700">{rule.lawName}</td>
+                    <td className="py-3 px-2 text-gray-700">{rule.name}</td>
 
                     <td className="py-3 px-2 text-gray-500 font-mono">
-                      {rule.ruleNumber}
+                      {rule.rule_number}
                     </td>
 
                     <td className="py-3 px-2 text-gray-500 max-w-75">
-                      <span className="line-clamp-2">{rule.description}</span>
+                      <span className="line-clamp-2">
+                        {rule.rule_description}
+                      </span>
                     </td>
 
                     {/* Actions */}
                     <td className="py-3 px-2">
-                      <div className="relative">
+                      <div className="relative" ref={menuRef}>
                         <button
                           onClick={() => setOpenMenu(openMenu === i ? null : i)}
                           className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-100"
@@ -88,11 +118,26 @@ export default function LawRulesTable({ rules }) {
                             >
                               <button
                                 onClick={() => {
-                                  console.log("Delete:", rule.id);
+                                  onEdit(rule);
                                   setOpenMenu(null);
+                                }}
+                                className="w-full text-left px-3 py-2 text-xs text-gray-500 hover:bg-gray-50"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => {
+                                  HandleDelete(rule.id);
                                 }}
                                 className="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-red-50"
                               >
+                                {loadingAction && (
+                                  <ClipLoader
+                                    size={15}
+                                    color="#fb2c36 "
+                                    className="relative top-1 mx-1"
+                                  />
+                                )}
                                 Delete
                               </button>
                             </motion.div>
@@ -110,7 +155,7 @@ export default function LawRulesTable({ rules }) {
 
       {/* Footer */}
       <p className="text-[11px] text-gray-300 mt-3">
-        Showing {rules.length} rules
+        Showing {rules?.length} rules
       </p>
     </motion.div>
   );

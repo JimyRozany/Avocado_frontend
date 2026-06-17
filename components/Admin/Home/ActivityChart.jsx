@@ -1,6 +1,6 @@
-'use client'
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+"use client";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import {
   ResponsiveContainer,
   LineChart,
@@ -9,21 +9,9 @@ import {
   YAxis,
   Tooltip,
   CartesianGrid,
-} from 'recharts'
-import { LayoutGrid, ChevronDown } from 'lucide-react'
+} from "recharts";
+import { LayoutGrid, ChevronDown } from "lucide-react";
 
-const data = [
-  { date: 'Mar 26', active: 1600, consult: 1200 },
-  { date: 'Mar 27', active: 1900, consult: 1500 },
-  { date: 'Mar 28', active: 1400, consult: 1100 },
-  { date: 'Mar 29', active: 1750, consult: 1400 },
-  { date: 'Mar 30', active: 1300, consult: 1050 },
-  { date: 'Mar 31', active: 1500, consult: 1300 },
-  { date: 'Apr 1',  active: 1800, consult: 1550 },
-  { date: 'Apr 2',  active: 1200, consult:  950 },
-  { date: 'Apr 3',  active: 1650, consult: 1400 },
-  { date: 'Apr 4',  active: 1500, consult: 1250 },
-]
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
@@ -32,18 +20,26 @@ const CustomTooltip = ({ active, payload, label }) => {
         <p className="font-semibold mb-1">{label}</p>
         {payload.map((p) => (
           <p key={p.name} style={{ color: p.color }}>
-            {p.name === 'active' ? 'Active Cases' : 'Consultations'}: {p.value.toLocaleString()}
+            {p.name === "active" ? "Active Cases" : "Consultations"}:{" "}
+            {p.value.toLocaleString()}
           </p>
         ))}
       </div>
-    )
+    );
   }
-  return null
-}
+  return null;
+};
 
-export default function CaseActivityChart() {
-  const [range, setRange] = useState('Last 90 Days')
-
+export default function CaseActivityChart({ CaseChatData=[] }) {
+  const [range, setRange] = useState("Last 90 Days");
+  const data = CaseChatData?.map((item) => ({
+    date: new Date(`${item.month}-01`).toLocaleDateString("en-US", {
+      month: "short",
+      year: "2-digit",
+    }),
+    active: item.active_cases,
+    consult: item.pending_cases,
+  }));
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -56,49 +52,58 @@ export default function CaseActivityChart() {
         <div className="flex items-center gap-2">
           <LayoutGrid size={16} className="text-gray-400" />
           <div>
-            <h2 className="text-sm font-bold text-gray-900">Case Activity Overview</h2>
+            <h2 className="text-sm font-bold text-gray-900">
+              Case Activity Overview
+            </h2>
             <p className="text-xs text-gray-400 mt-0.5">
-              See insights on how your{' '}
+              See insights on how your{" "}
               <span className="text-yellow-500 underline underline-offset-1 cursor-pointer">
                 Case Activity Overview
-              </span>{' '}
+              </span>{" "}
               has grown and changed over time
             </p>
           </div>
         </div>
-        <button className="flex items-center gap-1.5 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-600 bg-white hover:bg-gray-50 transition self-start">
-          {range}
-          <ChevronDown size={13} />
-        </button>
       </div>
 
       {/* Legend */}
       <div className="flex items-center gap-4 mb-4">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-gray-900 inline-block" />
-          <span className="text-xs text-gray-600 font-medium">Active Cases</span>
+          <span className="text-xs text-gray-600 font-medium">
+            Active Cases
+          </span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-full bg-yellow-400 inline-block" />
-          <span className="text-xs text-gray-600 font-medium">Consultations</span>
+          <span className="text-xs text-gray-600 font-medium">
+            Pending Cases
+          </span>
         </div>
       </div>
 
       {/* Chart */}
       <ResponsiveContainer width="100%" height={200}>
-        <LineChart data={data} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
+        <LineChart
+          data={data}
+          margin={{ top: 4, right: 4, left: -20, bottom: 0 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="#f0f0f0"
+            vertical={false}
+          />
           <XAxis
             dataKey="date"
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
+            tick={{ fontSize: 10, fill: "#9ca3af" }}
             axisLine={false}
             tickLine={false}
           />
           <YAxis
-            tick={{ fontSize: 10, fill: '#9ca3af' }}
+            tick={{ fontSize: 10, fill: "#9ca3af" }}
             axisLine={false}
             tickLine={false}
-            ticks={[0, 500, 1000, 1500, 2000]}
+            ticks={[0, 5, 10, 15, 20]}
           />
           <Tooltip content={<CustomTooltip />} />
           <Line
@@ -107,7 +112,7 @@ export default function CaseActivityChart() {
             stroke="#111827"
             strokeWidth={2.5}
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 0, fill: '#111827' }}
+            activeDot={{ r: 4, strokeWidth: 0, fill: "#111827" }}
           />
           <Line
             type="monotone"
@@ -115,10 +120,10 @@ export default function CaseActivityChart() {
             stroke="#facc15"
             strokeWidth={2.5}
             dot={false}
-            activeDot={{ r: 4, strokeWidth: 0, fill: '#facc15' }}
+            activeDot={{ r: 4, strokeWidth: 0, fill: "#facc15" }}
           />
         </LineChart>
       </ResponsiveContainer>
     </motion.div>
-  )
+  );
 }

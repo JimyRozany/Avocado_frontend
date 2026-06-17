@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { HiArrowUpRight } from "react-icons/hi2";
 import { MdOutlineGavel, MdOutlineSearch, MdOutlineSupportAgent, MdOutlineLock } from "react-icons/md";
 
@@ -34,6 +35,7 @@ const steps = [
 ];
 
 export default function Platform({type=""}) {
+   const router=useRouter()
   return (
     <section className="bg-black ">
         <div className="py-16 px-6 md:px-10 w-[95%] mx-auto">
@@ -53,8 +55,9 @@ export default function Platform({type=""}) {
             Avocato combines case management, Egyptian law research, and an intelligent legal assistant — in a safe and organized environment that serves lawyers and clients.
           </p>
           <motion.button
+          onClick={()=>router.push("/law-library")}
             whileHover={{ scale: 1.03 }}
-            className="flex items-center gap-2 bg-[#E8C547] text-black text-sm font-bold px-5 py-3 rounded-full w-fit"
+            className="flex items-center gap-2 cursor-pointer bg-[#E8C547] text-black text-sm font-bold px-5 py-3 rounded-full w-fit"
           >
             Explore Now
             <span className="w-6 h-6 rounded-full bg-black flex items-center justify-center">

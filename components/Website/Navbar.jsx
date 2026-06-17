@@ -9,6 +9,7 @@ import AuthDrawer from "./AuthModal";
 import { useDispatch, useSelector } from "react-redux";
 import { logout, Updatetoken } from "@/lib/UserAuth";
 import { ClipLoader } from "react-spinners";
+import { usePathname } from "next/navigation";
 
 const navLinks = [
   { name: "Home", link: "/" },
@@ -23,7 +24,12 @@ export default function Navbar() {
   const { token, loading } = useSelector((state) => state.UserRTK);
   const dispatch = useDispatch();
   const authToken = localStorage.getItem("authToken");
-  const user = JSON.parse(localStorage.getItem("user"));
+  const pathname=usePathname()
+  const [user, setUser] = useState();
+  useEffect(() => {
+    setUser(JSON.parse(localStorage.getItem("user")));
+  }, [token]);
+
   const [menuOpen, setMenuOpen] = useState(false);
   // AUTH DRAWER STATE
   const [authOpen, setAuthOpen] = useState(false);
@@ -47,13 +53,13 @@ export default function Navbar() {
     const result = await dispatch(logout());
     if (logout.fulfilled.match(result)) {
       dispatch(Updatetoken(""));
+      setUser("");
     }
   };
 
   useEffect(() => {
     dispatch(Updatetoken(authToken));
   }, [authToken, dispatch]);
-
 
   return (
     <>
@@ -91,7 +97,7 @@ export default function Navbar() {
               <Link
                 href={link.link}
                 className={`text-sm transition-colors ${
-                  i === 0
+                  pathname === link.link
                     ? "text-white font-semibold"
                     : "text-white/50 hover:text-white"
                 }`}
@@ -130,9 +136,9 @@ export default function Navbar() {
           <div className="flex items-center gap-4">
             <Link
               href={
-                user.type === "avocato"
+                user?.type === "avocato"
                   ? `/lawyer-dashboard`
-                  : user.type === "admin"
+                  : user?.type === "admin"
                     ? `/admin-dashboard`
                     : `/user-dashboard`
               }

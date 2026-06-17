@@ -19,7 +19,7 @@ export default function AuthDrawer({ open, onClose, type }) {
     email: "",
     phone: "",
     password: "",
-    taype: "user",
+    taype: "client",
   });
 
   const [loginData, setLoginData] = useState({
@@ -27,7 +27,7 @@ export default function AuthDrawer({ open, onClose, type }) {
     password: "",
   });
 
-  const roles = ["user", "avocato"];
+  const roles = ["client", "avocato"];
 
   useEffect(() => {
     const handleClickOutside = (event) => {

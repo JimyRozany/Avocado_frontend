@@ -1,7 +1,7 @@
 "use client";
 import CaseTable from "@/components/Admin/CaseManagement/CaseTable";
 import StatsCards from "@/components/Admin/Home/StatsCards";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Activity,
@@ -11,10 +11,19 @@ import {
   Folder,
   Shield,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { GetClient } from "@/lib/ClientManagement";
+import {
+  ActiveClient,
+  DeleteClient,
+  GetClient,
+  GetClientOverviewAll,
+} from "@/lib/ClientManagement";
+import { ClipLoader } from "react-spinners";
+import { AnimatePresence, motion } from "framer-motion";
+import { CreateWarning } from "@/lib/LawyerManagement";
 
 const STATUS_FILTERS = [
   "ALL",
@@ -26,78 +35,9 @@ const STATUS_FILTERS = [
 ];
 
 const statusConfig = {
-  CLOSED: "bg-green-50 text-green-600 border border-green-200",
-  PENDING: "bg-yellow-50 text-yellow-600 border border-yellow-200",
-  FLAGGED: "bg-red-50 text-red-500 border border-red-200",
-  ACTIVE: "bg-blue-50 text-blue-600 border border-blue-200",
-  SUSPENDED: "bg-gray-100 text-gray-500 border border-gray-200",
+  ACTIVE: "bg-green-100 text-green-700",
+  INACTIVE: "bg-red-100 text-red-700",
 };
-
-const INITIAL_CASES = [
-  {
-    id: "C-10231",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    status: "CLOSED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10232",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    status: "PENDING",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10233",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    status: "FLAGGED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10234",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    status: "ACTIVE",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10235",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    status: "SUSPENDED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10236",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    status: "CLOSED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10237",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    status: "CLOSED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-];
 
 const CASE_COLUMNS = [
   "Name",
@@ -110,90 +50,218 @@ const CASE_COLUMNS = [
   "Actions",
 ];
 
-const CASE_STATS = [
-  {
-    label: "Total Lawyers",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Folder,
-    dark: true,
-  },
-  {
-    label: "Active Lawyers",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Clock,
-    dark: false,
-  },
-  {
-    label: "Pending Verification",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Activity,
-    dark: false,
-  },
-  {
-    label: "Suspended Accounts",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Shield,
-    dark: false,
-  },
-];
-
 const Case = () => {
-  const { ClientDataDetails, loading, ClientData } = useSelector(
-    (state) => state.ClientRTK,
-  );
+  const { ClientDataDetails, loading, ClientData, OverviewDataAll } =
+    useSelector((state) => state.ClientRTK);
+  const { loadingWarning } = useSelector((state) => state.LawyerRTK);
+  const [warningOpen, setWarningOpen] = useState(false);
+  const [warningText, setWarningText] = useState("");
+  const [selectedLawyerId, setSelectedLawyerId] = useState(null);
   const router = useRouter();
-  const getItems = (row, actions) => [
-    {
-      label: "View Details",
-      icon: Eye,
-      color: "text-gray-700",
-      hover: "hover:bg-gray-50",
-      action: () => {
-        router.push(`/admin-dashboard/client-management/${row.id}`);
-        actions.closeMenu();
-      },
-    },
-    {
-      label: "Send Warning",
-      icon: AlertTriangle,
-      color: "text-orange-500",
-      hover: "hover:bg-orange-50",
-      action: () => {
-        actions.showToast(`Warning sent for ${row.id}`, "info");
-        actions.closeMenu();
-      },
-    },
-    {
-      label: "Delete Account",
-      icon: Trash2,
-      color: "text-red-500",
-      hover: "hover:bg-red-50",
-      action: () => actions.handleDelete(row.id),
-    },
-  ];
-  const dispatch = useDispatch();
-  console.log(ClientData.data);
+  const overview = OverviewDataAll?.data;
+  const CASE_STATS = useMemo(() => {
+    if (!overview) return [];
 
+    return [
+      {
+        label: "Total Clients",
+        value: overview.totalClients,
+        change: "0%",
+        icon: Users,
+        dark: true,
+      },
+      {
+        label: "Active Clients",
+        value: overview.activeClients,
+        change: "0%",
+        icon: Clock,
+        dark: false,
+      },
+      {
+        label: "Pending Verification",
+        value: overview.pendingVerification,
+        change: "0%",
+        icon: Activity,
+        dark: false,
+      },
+      {
+        label: "Suspended Accounts",
+        value: overview.suspendedAccounts,
+        change: "0%",
+        icon: Shield,
+        dark: false,
+      },
+    ];
+  }, [overview]);
+
+  const getItems = (row, actions) => {
+    const items = [
+      {
+        label: "View Details",
+        icon: Eye,
+        color: "text-gray-700",
+        hover: "hover:bg-gray-50",
+        action: () => {
+          router.push(`/admin-dashboard/client-management/${row.id}`);
+          actions.closeMenu();
+        },
+      },
+      {
+        label: "Send Warning",
+        icon: AlertTriangle,
+        color: "text-yellow-700",
+        hover: "hover:bg-orange-50",
+        action: () => {
+          setSelectedLawyerId(row.id);
+          setWarningOpen(true);
+          actions.closeMenu();
+        },
+      },
+      {
+        label: "Delete Account",
+        icon: Trash2,
+        color: "text-red-500",
+        hover: "hover:bg-red-50",
+        action: async () => {
+          const result = await dispatch(DeleteClient(row.id));
+          if (DeleteClient.fulfilled.match(result)) {
+            actions.closeMenu();
+          }
+        },
+      },
+    ];
+
+    const isNotActive = row.is_active;
+
+    if (isNotActive == 0) {
+      items.splice(3, 0, {
+        label: "Activate Client",
+        icon: Shield,
+        color: "text-green-700",
+        hover: "hover:bg-green-50",
+        action: async () => {
+          const result = await dispatch(ActiveClient(row.id));
+
+          if (ActiveClient.fulfilled.match(result)) {
+            actions.showToast("Activated successfully", "success");
+            actions.closeMenu();
+          }
+        },
+      });
+    }
+
+    return items;
+  };
+  const dispatch = useDispatch();
   useEffect(() => {
     dispatch(GetClient());
+    dispatch(GetClientOverviewAll());
   }, [dispatch]);
+
+  const HandleWarning = async () => {
+    if (loadingWarning) {
+      return;
+    }
+    const data = {
+      user_id: selectedLawyerId,
+      reason: warningText,
+    };
+    const result = await dispatch(CreateWarning(data));
+    if (CreateWarning.fulfilled.match(result)) {
+      setWarningOpen(false);
+      setWarningText("");
+    }
+  };
+
   return (
-    <div>
-      {/* Top 4 stat cards */}
-      <StatsCards stats={CASE_STATS} />
-      <CaseTable
-        STATUS_FILTERS={STATUS_FILTERS}
-        getItems={getItems}
-        statusConfig={statusConfig}
-        INITIAL_CASES={ClientData.data}
-        CASE_COLUMNS={CASE_COLUMNS}
-        type="client"
-      />
-    </div>
+    <>
+      <div>
+        {/* Top 4 stat cards */}
+        <StatsCards stats={CASE_STATS} />
+        <CaseTable
+          STATUS_FILTERS={STATUS_FILTERS}
+          getItems={getItems}
+          statusConfig={statusConfig}
+          INITIAL_CASES={ClientData.data}
+          CASE_COLUMNS={CASE_COLUMNS}
+          type="client"
+        />
+      </div>
+      <AnimatePresence>
+        {warningOpen && (
+          <div
+            className="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+            onClick={() => {
+              setWarningOpen(false);
+              setWarningText("");
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="w-130 rounded-2xl bg-white shadow-2xl overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="px-5 py-4 bg-gray-50">
+                <h2 className="text-lg font-semibold text-gray-800">
+                  Send Warning
+                </h2>
+                <p className="text-xs text-gray-500 mt-1">
+                  Write a clear reason before sending the warning
+                </p>
+              </div>
+
+              {/* Body */}
+              <div className="p-5">
+                <label className="text-sm text-gray-600 mb-2 block">
+                  Warning reason
+                </label>
+
+                <textarea
+                  className="w-full h-28 resize-none rounded-xl border border-gray-200 p-3 text-sm outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 transition"
+                  placeholder="Type the reason here..."
+                  value={warningText}
+                  onChange={(e) => setWarningText(e.target.value)}
+                />
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-2 px-5 py-4 bg-gray-50">
+                <button
+                  className="px-4 py-2 rounded-lg text-sm bg-white border border-gray-400 hover:bg-gray-100 transition"
+                  onClick={() => {
+                    setWarningOpen(false);
+                    setWarningText("");
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  disabled={!warningText.trim()}
+                  className="px-4 py-2 rounded-lg text-sm bg-yellow-500 text-white hover:bg-yellow-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                  onClick={() => {
+                    HandleWarning();
+                  }}
+                >
+                  {loadingWarning && (
+                    <ClipLoader
+                      size={16}
+                      color="#fff"
+                      className="relative top-1 mr-1"
+                    />
+                  )}
+                  Send Warning
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 

@@ -31,16 +31,31 @@ export default function AdminNavbar({ type = "" }) {
   const searchInputRef = useRef(null);
   const [active, setActive] = useState("");
   const pathname = usePathname();
-
+  const user = JSON.parse(localStorage.getItem("user"));
   useEffect(() => {
     const match = pathname.match(/case-management\/(\d+)/);
     const lawyermatch = pathname.match(/lawyer-management\/(\d+)/);
+    const clientmatch = pathname.match(/client-management\/(\d+)/);
     if (match) {
       setActive("caseNumber");
     } else if (pathname === "/admin-dashboard/case-management") {
       setActive("case");
+    } else if (pathname === "/admin-dashboard/permissions") {
+      setActive("permissions");
+    } else if (pathname === "/admin-dashboard/subscription") {
+      setActive("subscription");
+    } else if (pathname === "/admin-dashboard/report") {
+      setActive("report");
+    } else if (pathname === "/admin-dashboard/client-management") {
+      setActive("client");
+    } else if (pathname === "/admin-dashboard/lawyer-management") {
+      setActive("lawyer");
+    } else if (pathname === "/admin-dashboard/legal-management") {
+      setActive("Legal");
     } else if (lawyermatch) {
       setActive("lawyerNumber");
+    } else if (clientmatch) {
+      setActive("clientNumber");
     } else {
       setActive("");
     }
@@ -96,13 +111,7 @@ export default function AdminNavbar({ type = "" }) {
               <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                 Case Details
               </h1>
-              <span className="text-2xl font-light text-gray-400">
-                #C-10231
-              </span>
             </div>
-            <span className="inline-flex items-center gap-1 text-sm font-semibold text-amber-600 cursor-pointer hover:underline">
-              Active <span>▾</span>
-            </span>
           </>
         ) : active === "lawyerNumber" ? (
           <>
@@ -110,13 +119,15 @@ export default function AdminNavbar({ type = "" }) {
               <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                 Lawyer Details
               </h1>
-              <span className="text-2xl font-light text-gray-400">
-                #C-10231
-              </span>
             </div>
-            <span className="inline-flex items-center gap-1 text-sm font-semibold text-amber-600 cursor-pointer hover:underline">
-              Active <span>▾</span>
-            </span>
+          </>
+        ) : active === "clientNumber" ? (
+          <>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                Client Details
+              </h1>
+            </div>
           </>
         ) : active === "case" ? (
           <>
@@ -129,7 +140,90 @@ export default function AdminNavbar({ type = "" }) {
                 <span className="text-yellow-500 font-medium underline underline-offset-2 cursor-pointer">
                   Your Business
                 </span>{" "}
-                has changed from Jun 13 - Jul 12
+              </p>
+            </div>
+          </>
+        ) : active === "client" ? (
+          <>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                Client Management
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                See insights on how{" "}
+                <span className="text-yellow-500 font-medium underline underline-offset-2 cursor-pointer">
+                  Your Business
+                </span>{" "}
+              </p>
+            </div>
+          </>
+        ) : active === "lawyer" ? (
+          <>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                Lawyer Management
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                See insights on how{" "}
+                <span className="text-yellow-500 font-medium underline underline-offset-2 cursor-pointer">
+                  Your Business
+                </span>{" "}
+              </p>
+            </div>
+          </>
+        ) : active === "Legal" ? (
+          <>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                Legal Management
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                See insights on how{" "}
+                <span className="text-yellow-500 font-medium underline underline-offset-2 cursor-pointer">
+                  Your Business
+                </span>{" "}
+              </p>
+            </div>
+          </>
+        ) : active === "subscription" ? (
+          <>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                Subscription Management
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                See insights on how{" "}
+                <span className="text-yellow-500 font-medium underline underline-offset-2 cursor-pointer">
+                  Your Business
+                </span>{" "}
+              </p>
+            </div>
+          </>
+        ) : active === "permissions" ? (
+          <>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                Permissions Management
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                See insights on how{" "}
+                <span className="text-yellow-500 font-medium underline underline-offset-2 cursor-pointer">
+                  Your Business
+                </span>{" "}
+              </p>
+            </div>
+          </>
+        ) : active === "report" ? (
+          <>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                Report Management
+              </h1>
+              <p className="text-sm text-gray-500 mt-0.5">
+                See insights on how{" "}
+                <span className="text-yellow-500 font-medium underline underline-offset-2 cursor-pointer">
+                  Your Business
+                </span>{" "}
               </p>
             </div>
           </>
@@ -137,14 +231,13 @@ export default function AdminNavbar({ type = "" }) {
           <>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                Hi, Bahr Adam...
+                Hi, {user?.name}...
               </h1>
               <p className="text-sm text-gray-500 mt-0.5">
                 See insights on how{" "}
                 <span className="text-yellow-500 font-medium underline underline-offset-2 cursor-pointer">
                   Your Business
                 </span>{" "}
-                has changed from Jun 13 - Jul 12
               </p>
             </div>
           </>

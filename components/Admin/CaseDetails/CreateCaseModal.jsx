@@ -1,78 +1,93 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
-import { CreateCase } from "@/lib/CaseManagement";
 import { toast } from "react-toastify";
+import { CreateCase } from "@/lib/CaseManagement";
+import { GetClient } from "@/lib/ClientManagement";
+import { GetLawyer } from "@/lib/LawyerManagement";
+import { ClipLoader } from "react-spinners";
 
 export default function CreateCaseModalCompact({ onClose }) {
+  const { ClientData } = useSelector((state) => state.ClientRTK);
+  const { LawyerData } = useSelector((state) => state.LawyerRTK);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const isAdmin = user?.type === "admin";
+  const isLawyer = user?.type === "avocato";
+  const isUser = user?.type === "client";
+  const dispatch = useDispatch();
   const fileRef = useRef(null);
-  const {loadingCreate} =useSelector((state)=>state.CaseRTK)
+
+  const { loadingCreate } = useSelector((state) => state.CaseRTK);
+
   const [form, setForm] = useState({
-    caseName: "",
-    lawyer: "",
-    category: "",
-    expectations: "",
-    lastUpdate: "",
-    firstHearingDate: "",
-    category2: "",
-    circumstances: "",
-    lastUpdate2: "",
-    transactions: "",
-    judge: "",
-    courtParty: "",
+    case_number: "",
+    title: "",
+    type: "",
+    court_name: "",
+    lawyer_id: "",
+    client_id: "",
   });
 
   const [documents, setDocuments] = useState([]);
-  const [sessions, setSessions] = useState([]);
-  const [sessionText, setSessionText] = useState("");
-  const dispatch=useDispatch()
+
   const handleChange = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
-  // 📄 Upload Documents
   const handleDocUpload = (e) => {
     const files = Array.from(e.target.files);
-    const mapped = files.map((file, i) => ({
-      id: Date.now() + i,
+
+    const mapped = files.map((file, index) => ({
+      id: Date.now() + index,
       name: file.name,
       file,
     }));
+
     setDocuments((prev) => [...prev, ...mapped]);
   };
 
-  // 📝 Add Session
-  const handleAddSession = () => {
-    if (!sessionText.trim()) return;
-
-    const newSession = {
-      id: Date.now(),
-      text: sessionText,
-      date: new Date().toLocaleDateString(),
-    };
-
-    setSessions((prev) => [newSession, ...prev]);
-    setSessionText("");
-  };
-
   const handleSave = async () => {
-    if(loadingCreate){
-      return
+    if (loadingCreate) return;
+
+    const formData = new FormData();
+
+    formData.append("case_number", form.case_number);
+    formData.append("title", form.title);
+    formData.append("type", form.type);
+    formData.append("court_name", form.court_name);
+    formData.append("lawyer_id", form.lawyer_id);
+    formData.append("client_id", form.client_id);
+
+    documents.forEach((doc) => {
+      if (doc.file instanceof File) {
+        formData.append("documents[]", doc.file);
+      }
+    });
+
+    const result = await dispatch(CreateCase(formData));
+
+    if (CreateCase.fulfilled.match(result)) {
+      onClose();
+      setForm({
+        case_number: "",
+        title: "",
+        type: "",
+        court_name: "",
+        lawyer_id: "",
+        client_id: "",
+      });
     }
-    const payload = {
-      ...form,
-      documents,
-      sessions,
-    };
-    const result = await dispatch(CreateCase(payload))
-    if(CreateCase.fulfilled.match(result)){
-      toast.success("Added successfully")
-    }
-    onClose();
   };
 
+  useEffect(() => {
+    dispatch(GetClient());
+    dispatch(GetLawyer());
+  }, [dispatch]);
   return (
     <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
@@ -82,63 +97,86 @@ export default function CreateCaseModalCompact({ onClose }) {
     >
       <motion.div
         onClick={(e) => e.stopPropagation()}
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
+        initial={{
+          scale: 0.9,
+          opacity: 0,
+          y: 20,
+        }}
+        animate={{
+          scale: 1,
+          opacity: 1,
+          y: 0,
+        }}
         className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto"
       >
         <h2 className="text-xl font-bold text-gray-900 mb-4">
           Create New Case
         </h2>
 
-        {/* 🔹 INPUTS */}
+        {/* FORM */}
         <div className="grid grid-cols-2 gap-3">
-          <Input placeholder="Case name" value={form.caseName} onChange={(v) => handleChange("caseName", v)} />
-          <Input placeholder="Lawyer name" value={form.lawyer} onChange={(v) => handleChange("lawyer", v)} />
+          <Input
+            placeholder="Case Number"
+            value={form.case_number}
+            onChange={(v) => handleChange("case_number", v)}
+          />
 
-          <Input placeholder="Category" value={form.category} onChange={(v) => handleChange("category", v)} />
-          <Input placeholder="Expectations" value={form.expectations} onChange={(v) => handleChange("expectations", v)} />
+          <Input
+            placeholder="Title"
+            value={form.title}
+            onChange={(v) => handleChange("title", v)}
+          />
 
-          <div>
-            <label className="text-[10px] text-gray-600 mb-1">lastUpdate</label>
-            <Input type="date" value={form.lastUpdate} onChange={(v) => handleChange("lastUpdate", v)} />
-          </div>
-          <div>
-            <label className="text-[10px] text-gray-600 mb-1">firstHearingDate</label>
-            <Input type="date" value={form.firstHearingDate} onChange={(v) => handleChange("firstHearingDate", v)} />
-          </div>
+          <Input
+            placeholder="Type"
+            value={form.type}
+            onChange={(v) => handleChange("type", v)}
+          />
 
-          <Input placeholder="Category" value={form.category2} onChange={(v) => handleChange("category2", v)} />
-          <Input placeholder="Circumstances" value={form.circumstances} onChange={(v) => handleChange("circumstances", v)} />
+          <Input
+            placeholder="Court Name"
+            value={form.court_name}
+            onChange={(v) => handleChange("court_name", v)}
+          />
 
-          <Input placeholder="Last update" value={form.lastUpdate2} onChange={(v) => handleChange("lastUpdate2", v)} />
-          <Input placeholder="Transactions" value={form.transactions} onChange={(v) => handleChange("transactions", v)} />
+          {(isAdmin || isUser) && (
+            <AnimatedSelect
+              label="Lawyer"
+              value={form.lawyer_id}
+              options={LawyerData?.data?.data}
+              onChange={(value) => handleChange("lawyer_id", value)}
+            />
+          )}
 
-          <Input placeholder="Judge" value={form.judge} onChange={(v) => handleChange("judge", v)} />
-          <Input placeholder="Court / Party" value={form.courtParty} onChange={(v) => handleChange("courtParty", v)} />
+          {(isAdmin || isLawyer) && (
+            <AnimatedSelect
+              label="Client"
+              value={form.client_id}
+              options={ClientData?.data}
+              onChange={(value) => handleChange("client_id", value)}
+            />
+          )}
         </div>
 
-        {/* 📄 DOCUMENTS */}
+        {/* DOCUMENTS */}
         <div className="mt-6">
           <h3 className="text-sm font-semibold text-gray-700 mb-2">
             Documents
           </h3>
 
-          <div className="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
+          <div className="flex flex-col gap-2 max-h-40 overflow-y-auto">
             {documents.map((doc) => (
               <div
                 key={doc.id}
                 className="flex justify-between items-center border border-gray-100 rounded-lg px-3 py-2 bg-gray-50"
               >
-                <span className="text-sm text-gray-700 truncate">
-                  {doc.name}
-                </span>
+                <span className="text-sm truncate">{doc.name}</span>
+
                 <button
                   onClick={() =>
-                    setDocuments((prev) =>
-                      prev.filter((d) => d.id !== doc.id)
-                    )
+                    setDocuments((prev) => prev.filter((d) => d.id !== doc.id))
                   }
-                  className="text-xs text-red-500 hover:text-red-700"
+                  className="text-red-500 text-xs"
                 >
                   ✕
                 </button>
@@ -155,44 +193,11 @@ export default function CreateCaseModalCompact({ onClose }) {
           />
 
           <button
-            onClick={() => fileRef.current.click()}
+            onClick={() => fileRef.current?.click()}
             className="mt-3 w-full py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 transition"
           >
             + Upload Document
           </button>
-        </div>
-
-        {/* 📝 SESSIONS */}
-        <div className="mt-6">
-          <h3 className="text-sm font-semibold text-gray-700 mb-2">
-            Sessions
-          </h3>
-
-          <textarea
-            value={sessionText}
-            onChange={(e) => setSessionText(e.target.value)}
-            placeholder="Add session update..."
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none"
-          />
-
-          <button
-            onClick={handleAddSession}
-            className="mt-2 w-full py-2 rounded-lg bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600"
-          >
-            + Add Session
-          </button>
-
-          <div className="flex flex-col gap-2 mt-3 max-h-40 overflow-y-auto">
-            {sessions.map((s) => (
-              <div
-                key={s.id}
-                className="border border-gray-100 rounded-lg px-3 py-2 bg-gray-50"
-              >
-                <p className="text-sm text-gray-700">{s.text}</p>
-                <span className="text-xs text-gray-400">{s.date}</span>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* ACTIONS */}
@@ -205,9 +210,17 @@ export default function CreateCaseModalCompact({ onClose }) {
           </button>
 
           <button
+            disabled={loadingCreate}
             onClick={handleSave}
-            className="px-5 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700"
+            className="px-5 py-2 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-gray-700 disabled:opacity-50"
           >
+            {loadingCreate && (
+              <ClipLoader
+                size={15}
+                color="#fff "
+                className="relative top-1 mx-1"
+              />
+            )}
             Save Case
           </button>
         </div>
@@ -216,7 +229,8 @@ export default function CreateCaseModalCompact({ onClose }) {
   );
 }
 
-/* 🔹 Reusable Input */
+/* INPUT */
+
 function Input({ value, onChange, placeholder, type = "text" }) {
   return (
     <input
@@ -224,7 +238,69 @@ function Input({ value, onChange, placeholder, type = "text" }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent transition bg-gray-50"
+      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 placeholder-gray-400 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-400"
     />
+  );
+}
+
+/* ANIMATED SELECT */
+
+function AnimatedSelect({ label, options, value, onChange }) {
+  const [open, setOpen] = useState(false);
+
+  const safeOptions = Array.isArray(options) ? options : [];
+
+  const selected = safeOptions.find((item) => item.id === value);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-left text-sm text-gray-700"
+      >
+        {selected?.name || `Select ${label}`}
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{
+              opacity: 0,
+              y: -10,
+              scale: 0.95,
+            }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              scale: 1,
+            }}
+            exit={{
+              opacity: 0,
+              y: -10,
+              scale: 0.95,
+            }}
+            transition={{
+              duration: 0.2,
+            }}
+            className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-50"
+          >
+            {options.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => {
+                  onChange(item.id);
+                  setOpen(false);
+                }}
+                className="w-full text-left px-3 py-2 text-sm hover:bg-amber-50"
+              >
+                {item.name}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

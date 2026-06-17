@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, Activity } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import LawyerSummaryCard from "@/components/Admin/LawyerDetails/Lawyersummarycard";
 import WarningsHistoryCard from "@/components/Admin/LawyerDetails/Warningshistorycard";
@@ -10,101 +10,226 @@ import DocumentsCard from "@/components/Admin/LawyerDetails/Documentscard";
 import ReviewsListCard from "@/components/Admin/LawyerDetails/Reviewslistcard";
 import { useParams } from "next/navigation";
 import StatsCards from "@/components/Admin/Home/StatsCards";
-import { Clock, Folder, Shield } from "lucide-react";
+import { Activity, Clock, Folder, Shield } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  GetDocument,
+  GetLawyerDetails,
+  GetLawyerOverview,
+  GetLawyerOverviewSepcial,
+  GetRating,
+  GetWarning,
+  UpdateLawyer,
+} from "@/lib/LawyerManagement";
 
-const getMockLawyerData = (id) => ({
-  avatarUrl: "", // or a real URL
-  summary: {
-    fullName: "James A. Hartwell",
-    email: "james.hartwell@lawfirm.com",
-    bio: "Experienced litigation attorney specializing in corporate law and dispute resolution with over a decade of practice in federal and state courts.",
-    phone: "+1 (555) 012-3456",
-    barNumber: "BAR-2024-0091",
-    yearsExp: "12",
-    specialty: "Corporate Litigation",
-    officeLocation: "New York, NY",
-    accountStatus: "Active",
-  },
-  subscription: {
-    planName: "Professional",
-    planBadge: "Pro",
-    status: "Active",
-    startDate: "2024-01-01",
-    expiryDate: "2025-01-01",
-    accountSetting: "Auto-renew enabled",
-  },
-  documents: [
-    { name: "Bar_Certificate_2024.pdf", size: "1.2 MB", date: "12 Jun 2025" },
-    { name: "License_Renewal.pdf", size: "890 KB", date: "10 Jun 2025" },
-    { name: "Insurance_Policy.pdf", size: "2.1 MB", date: "08 Jun 2025" },
-    { name: "Court_Credentials.pdf", size: "540 KB", date: "05 Jun 2025" },
-  ],
-  warnings: [
-    { id: "WRN-1021", reason: "Late response to client inquiry exceeding 48 hours", sentBy: "Admin", date: "12 Jun 2025", status: "Resolved" },
-    { id: "WRN-1022", reason: "Late response to urgent case update", sentBy: "Admin", date: "12 Jun 2025", status: "Active" },
-    { id: "WRN-1023", reason: "Late response to document submission deadline", sentBy: "Admin", date: "12 Jun 2025", status: "Resolved" },
-  ],
-  reviews: [
-    { clientName: "Bahr Adam", rating: 4.5, comment: "Very professional and thorough in every aspect of my case.", caseId: "C-10231", date: "12 Jun 2025" },
-    { clientName: "Sarah Miller", rating: 5, comment: "Exceptional service, would highly recommend to anyone.", caseId: "C-10198", date: "08 Jun 2025" },
-    { clientName: "Omar Hassan", rating: 4, comment: "Good communication throughout the legal process.", caseId: "C-10150", date: "01 Jun 2025" },
-  ],
-  notifications: {
-    emailNotifications: true,
-    newCaseCreated: true,
-    messages: true,
-    reviews: false,
-    paymentReceived: false,
-    systemAlerts: false,
-  },
-});
+const mapLawyerData = (apiData, documents = []) => {
+  return {
+    avatarUrl: apiData.image || "",
+    summary: {
+      fullName: apiData.name || "",
+      email: apiData.email || "",
+      bio: apiData.bio || "",
+      phone: apiData.mobile || "",
+      barNumber: apiData.bar_association_number || "",
+      yearsExp: apiData.years_of_experience || "",
+      specialty: apiData.specialty || "",
+      officeLocation: apiData.office_location || "",
+      accountStatus: apiData.is_active ? "Active" : "Inactive",
+    },
 
-const CASE_STATS = [
-  {
-    label: "Total Cases",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Folder,
-    dark: true,
-  },
-  {
-    label: "Pending",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Clock,
-    dark: false,
-  },
-  {
-    label: "Active",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Activity,
-    dark: false,
-  },
-  {
-    label: "Closed",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Shield,
-    dark: false,
-  },
-];
+    subscription: {
+      planName: "Professional",
+      planBadge: "Pro",
+      status: "Active",
+      startDate: "2024-01-01",
+      expiryDate: "2025-01-01",
+      accountSetting: "Auto-renew enabled",
+    },
+
+    documents: Array.isArray(documents)
+      ? documents.map((doc) => ({
+          id: doc.id,
+          name: doc.title || "Untitled",
+          filePath: doc.file_path,
+          description: doc.description,
+          type: doc.type,
+          date: doc.created_at
+            ? new Date(doc.created_at).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "",
+        }))
+      : [],
+    warnings: Array.isArray(apiData?.warnings)
+      ? apiData?.warnings.map((w, index) => ({
+          id: w.id || `WRN-${index + 1000}`,
+          warning_id: w.warning_id || `WRN-${index + 1000}`,
+          reason: w.reason || w.message || "",
+          sentBy: w.sender?.name || w.sentBy || "Admin",
+          date: w.created_at
+            ? new Date(w.created_at).toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })
+            : "",
+          status: w.status || "Active",
+        }))
+      : [],
+    reviews: [
+      {
+        clientName: "Bahr Adam",
+        rating: 4.5,
+        comment: "Very professional and thorough in every aspect of my case.",
+        caseId: "C-10231",
+        date: "12 Jun 2025",
+      },
+      {
+        clientName: "Sarah Miller",
+        rating: 5,
+        comment: "Exceptional service, would highly recommend to anyone.",
+        caseId: "C-10198",
+        date: "08 Jun 2025",
+      },
+      {
+        clientName: "Omar Hassan",
+        rating: 4,
+        comment: "Good communication throughout the legal process.",
+        caseId: "C-10150",
+        date: "01 Jun 2025",
+      },
+    ],
+    notifications: {
+      emailNotifications: true,
+      newCaseCreated: true,
+      messages: true,
+      reviews: false,
+      paymentReceived: false,
+      systemAlerts: false,
+    },
+  };
+};
 
 export default function LawyerProfile() {
-    const {lawyerID} = useParams()
-     const data = getMockLawyerData(lawyerID);
+  const {
+    LawyerDataDetails,
+    OverviewData,
+    DocumentData,
+    loadingDocument,
+    loadingWarning,
+    WarningData,
+    LoadingRating,
+    RatingData
+  } = useSelector((state) => state.LawyerRTK);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const { lawyerID } = useParams();
   const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState(data);
-  const [tempData, setTempData] = useState(data);
+  const [formData, setFormData] = useState(() =>
+    mapLawyerData(LawyerDataDetails),
+  );
+  const [tempData, setTempData] = useState(() =>
+    mapLawyerData(LawyerDataDetails),
+  );
+  const dispatch = useDispatch();
+  const [avatarFile, setAvatarFile] = useState(null);
+  const overview = OverviewData?.data;
+  const CASE_STATS = useMemo(() => {
+    if (!overview) return [];
+
+    return [
+      {
+        label: "Total Cases",
+        value: overview.totalCases,
+        change: "0%",
+        icon: Folder,
+        dark: true,
+      },
+      {
+        label: "Pending",
+        value: overview.pendingCases,
+        change: "0%",
+        icon: Clock,
+        dark: false,
+      },
+      {
+        label: "Active",
+        value: overview.activeCases,
+        change: "0%",
+        icon: Activity,
+        dark: false,
+      },
+      {
+        label: "Closed",
+        value: overview.closedCases,
+        change: "0%",
+        icon: Shield,
+        dark: false,
+      },
+    ];
+  }, [overview]);
+
+  useEffect(() => {
+    if (LawyerDataDetails) {
+      const mapped = mapLawyerData(
+        {
+          ...LawyerDataDetails,
+          warnings: WarningData?.warnings || [],
+        },
+        DocumentData?.documents || [],
+      );
+
+      setFormData(mapped);
+      setTempData(mapped);
+    }
+  }, [LawyerDataDetails, WarningData?.warnings, DocumentData?.documents]);
+  useEffect(() => {
+    dispatch(GetLawyerDetails(lawyerID));
+    dispatch(GetLawyerOverviewSepcial());
+    dispatch(GetDocument(lawyerID));
+    dispatch(GetWarning(lawyerID));
+    dispatch(GetRating(lawyerID))
+  }, [dispatch, lawyerID]);
 
   const handleEdit = () => {
     setTempData(formData);
     setIsEditing(true);
   };
+  const handleSave = async () => {
+    try {
+      const formData = new FormData();
+      const summary = tempData?.summary;
+      formData.append("name", summary.fullName || "");
+      formData.append("bar_association_number", summary.barNumber || "");
+      formData.append("email", summary.email || "");
+      formData.append("mobile", summary.phone || "");
+      formData.append("bio", summary.bio || "");
+      formData.append("office_location", summary.officeLocation || "");
+      formData.append("specialty", summary.specialty || "");
+      formData.append("years_of_experience", summary.yearsExp || "");
+      formData.append("_method", "PUT" || "");
+      // لو عندك صورة (file أو url حسب النظام عندك)
+      if (avatarFile instanceof File) {
+        formData.append("image", avatarFile);
+      }
 
-  const handleSave = () => {
-    setFormData(tempData);
-    setIsEditing(false);
+      // password غالبًا optional — ابعته فقط لو موجود
+      if (summary.password) {
+        formData.append("password", summary.password);
+      }
+
+      await dispatch(
+        UpdateLawyer({
+          id: lawyerID,
+          data: formData,
+        }),
+      );
+      setFormData(tempData);
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Save failed:", error);
+    }
   };
 
   const handleCancel = () => {
@@ -132,8 +257,13 @@ export default function LawyerProfile() {
     }));
   };
 
-  const handleImageChange = (newImage) => {
-    setTempData((prev) => ({ ...prev, avatarUrl: newImage }));
+  const handleImageChange = (file, previewUrl) => {
+    setAvatarFile(file);
+
+    setTempData((prev) => ({
+      ...prev,
+      avatarUrl: previewUrl,
+    }));
   };
 
   const handleDocumentUpload = (newDoc) => {
@@ -156,47 +286,19 @@ export default function LawyerProfile() {
     <div className=" font-['Instrument_Sans',sans-serif]">
       {/* Top Bar */}
       <StatsCards stats={CASE_STATS} />
-      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-200  py-4 flex items-center justify-between">
-        
-        <div className="flex items-center gap-3">
-          <AnimatePresence mode="wait">
-            {!isEditing ? (
-              <motion.button
-                key="edit"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.18 }}
-                onClick={handleEdit}
-                className="flex items-center gap-2 px-5 py-2.5 bg-[#1a1a1a] text-white text-sm font-semibold rounded-lg hover:bg-[#2d2d2d] transition-colors"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                  />
-                </svg>
-                Edit Profile
-              </motion.button>
-            ) : (
-              <motion.div
-                key="actions"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.18 }}
-                className="flex items-center gap-2"
-              >
-                <button
-                  onClick={handleCancel}
-                  className="flex items-center gap-2 px-5 py-2.5 border border-stone-300 text-stone-600 text-sm font-semibold rounded-lg hover:bg-stone-100 transition-colors"
+      {user?.type !== "admin" && (
+        <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-stone-200  py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <AnimatePresence mode="wait">
+              {!isEditing ? (
+                <motion.button
+                  key="edit"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.18 }}
+                  onClick={handleEdit}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-[#1a1a1a] text-white text-sm font-semibold rounded-lg hover:bg-[#2d2d2d] transition-colors"
                 >
                   <svg
                     className="w-4 h-4"
@@ -208,35 +310,64 @@ export default function LawyerProfile() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                     />
                   </svg>
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-[#c8a96e] text-white text-sm font-semibold rounded-lg hover:bg-[#b8964f] transition-colors"
+                  Edit Profile
+                </motion.button>
+              ) : (
+                <motion.div
+                  key="actions"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.18 }}
+                  className="flex items-center gap-2"
                 >
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center gap-2 px-5 py-2.5 border border-stone-300 text-stone-600 text-sm font-semibold rounded-lg hover:bg-stone-100 transition-colors"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  Save Changes
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-[#c8a96e] text-white text-sm font-semibold rounded-lg hover:bg-[#b8964f] transition-colors"
+                  >
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Save Changes
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Edit Mode Banner */}
       <AnimatePresence>
@@ -275,7 +406,7 @@ export default function LawyerProfile() {
             <WarningsHistoryCard warnings={currentData.warnings} />
             <NotificationSettingsCard
               notifications={currentData.notifications}
-              isEditing={isEditing}
+              isEditing={false}
               onChange={handleNotificationChange}
             />
           </div>
@@ -284,7 +415,7 @@ export default function LawyerProfile() {
           <div className="flex flex-col gap-6">
             <SubscriptionInfoCard
               data={currentData.subscription}
-              isEditing={isEditing}
+              isEditing={false}
               onChange={(field, value) =>
                 handleFieldChange("subscription", field, value)
               }
@@ -295,7 +426,7 @@ export default function LawyerProfile() {
               onUpload={handleDocumentUpload}
               onDelete={handleDocumentDelete}
             />
-            <ReviewsListCard reviews={currentData.reviews} />
+            <ReviewsListCard reviews={RatingData?.reviews} />
           </div>
         </div>
       </div>

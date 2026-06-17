@@ -11,38 +11,16 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-const CASE_STATS = [
-  {
-    label: "Total Cases",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Folder,
-    dark: true,
-  },
-  {
-    label: "Pending",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Clock,
-    dark: false,
-  },
-  {
-    label: "Active",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Activity,
-    dark: false,
-  },
-  {
-    label: "Closed",
-    value: "592.323",
-    change: "-0.89%",
-    icon: Shield,
-    dark: false,
-  },
-];
+import { useDispatch, useSelector } from "react-redux";
+import {
+  DeleteCase,
+  ForceClose,
+  GetCase,
+  GetOverFlowCase,
+} from "@/lib/CaseManagement";
+import { GetLawyerOverview, GetLawyerOverviewSepcial, GetmyCases } from "@/lib/LawyerManagement";
 
 const STATUS_FILTERS = [
   "ALL",
@@ -61,79 +39,6 @@ const statusConfig = {
   SUSPENDED: "bg-gray-100 text-gray-500 border border-gray-200",
 };
 
-const INITIAL_CASES = [
-  {
-    id: "C-10231",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    category: "Commercial",
-    status: "CLOSED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10232",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    category: "Commercial",
-    status: "PENDING",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10233",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    category: "Commercial",
-    status: "FLAGGED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10234",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    category: "Commercial",
-    status: "ACTIVE",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10235",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    category: "Commercial",
-    status: "SUSPENDED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10236",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    category: "Commercial",
-    status: "CLOSED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-  {
-    id: "C-10237",
-    title: "Commercial contract dispute",
-    client: "Bahr Adam",
-    lawyer: "Bahr Adam",
-    category: "Commercial",
-    status: "CLOSED",
-    created: "02 Jun 2025",
-    updated: "25 Jun 2025",
-  },
-];
-
 const CASE_COLUMNS = [
   "Case ID",
   "Case Title",
@@ -147,6 +52,38 @@ const CASE_COLUMNS = [
 ];
 
 const CaseManagement = () => {
+  const { CaseDataDetails, loading, CaseData, CaseDataOverFlow } = useSelector(
+    (state) => state.CaseRTK,
+  );
+  const user = JSON.parse(localStorage.getItem("user"));
+
+  const { DataCases, OverviewData } = useSelector((state) => state.LawyerRTK);
+  const CASE_STATS = [
+    {
+      label: "Total Cases",
+      value: OverviewData?.data?.totalCases ?? 0,
+      icon: Folder,
+      dark: true,
+    },
+    {
+      label: "Pending",
+      value: OverviewData?.data?.pendingCases ?? 0,
+      icon: Clock,
+      dark: false,
+    },
+    {
+      label: "Active",
+      value: OverviewData?.data?.activeCases ?? 0,
+      icon: Activity,
+      dark: false,
+    },
+    {
+      label: "Closed",
+      value: OverviewData?.data?.closedCases ?? 0,
+      icon: Shield,
+      dark: false,
+    },
+  ];
   const router = useRouter();
   const getItems = (row, actions) => [
     {
@@ -159,38 +96,45 @@ const CaseManagement = () => {
         actions.closeMenu();
       },
     },
-    // {
-    //   label: "Suspend / Reactivate",
-    //   icon: Shield,
-    //   color: "text-yellow-600",
-    //   hover: "hover:bg-yellow-50",
-    //   action: () => actions.handleSuspend(row.id),
-    // },
+
+    // Only show Force Close if case is not closed
+    ...(row.status?.toUpperCase() !== "CLOSED"
+      ? [
+          {
+            label: "Force Close",
+            icon: X,
+            color: "text-gray-700",
+            hover: "hover:bg-gray-50",
+            action: async () => {
+              const result = await dispatch(ForceClose(row.id));
+              if (ForceClose.fulfilled.match(result)) {
+                actions.closeMenu();
+              }
+            },
+          },
+        ]
+      : []),
+
     {
-      label: "Force Close",
-      icon: X,
-      color: "text-gray-700",
-      hover: "hover:bg-gray-50",
-      action: () => actions.handleForceClose(row.id),
-    },
-    {
-      label: "Send Warning",
-      icon: AlertTriangle,
-      color: "text-orange-500",
-      hover: "hover:bg-orange-50",
-      action: () => {
-        actions.showToast(`Warning sent for ${row.id}`, "info");
-        actions.closeMenu();
-      },
-    },
-    {
-      label: "Delete Account",
+      label: "Delete Case",
       icon: Trash2,
       color: "text-red-500",
       hover: "hover:bg-red-50",
-      action: () => actions.handleDelete(row.id),
+      action: async () => {
+        const result = await dispatch(DeleteCase(row.id));
+        if (DeleteCase.fulfilled.match(result)) {
+          actions.closeMenu();
+        }
+      },
     },
   ];
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(GetmyCases(user?.id));
+    dispatch(GetOverFlowCase());
+    dispatch(GetLawyerOverviewSepcial());
+  }, [dispatch, user?.id]);
+
   return (
     <div>
       {/* Top 4 stat cards */}
@@ -199,8 +143,9 @@ const CaseManagement = () => {
         STATUS_FILTERS={STATUS_FILTERS}
         getItems={getItems}
         statusConfig={statusConfig}
-        INITIAL_CASES={INITIAL_CASES}
+        INITIAL_CASES={DataCases?.cases}
         CASE_COLUMNS={CASE_COLUMNS}
+        type="case"
       />
     </div>
   );
