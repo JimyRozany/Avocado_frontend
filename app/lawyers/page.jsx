@@ -27,7 +27,11 @@ export default function LawyersSection() {
     type: "",
     court_name: "",
   });
-  const user = JSON.parse(localStorage.getItem("user"));
+    const [user, setuser] = useState("");
+
+useEffect(() => {
+  setuser(JSON.parse(localStorage.getItem("user")) || "");
+}, []);
   const [document, setDocument] = useState(null);
   useEffect(() => {
     dispatch(GetLawyer());

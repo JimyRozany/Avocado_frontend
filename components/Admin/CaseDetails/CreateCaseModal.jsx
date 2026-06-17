@@ -12,7 +12,11 @@ import { ClipLoader } from "react-spinners";
 export default function CreateCaseModalCompact({ onClose }) {
   const { ClientData } = useSelector((state) => state.ClientRTK);
   const { LawyerData } = useSelector((state) => state.LawyerRTK);
-  const user = JSON.parse(localStorage.getItem("user"));
+    const [user, setuser] = useState("");
+
+useEffect(() => {
+  setuser(JSON.parse(localStorage.getItem("user")) || "");
+}, []);
   const isAdmin = user?.type === "admin";
   const isLawyer = user?.type === "avocato";
   const isUser = user?.type === "client";

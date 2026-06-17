@@ -121,9 +121,13 @@ export default function LawyerProfile() {
     loadingWarning,
     WarningData,
     LoadingRating,
-    RatingData
+    RatingData,
   } = useSelector((state) => state.LawyerRTK);
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [user, setuser] = useState("");
+
+  useEffect(() => {
+    setuser(JSON.parse(localStorage.getItem("user")) || "");
+  }, []);
   const { lawyerID } = useParams();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState(() =>
@@ -189,7 +193,7 @@ export default function LawyerProfile() {
     dispatch(GetLawyerOverviewSepcial());
     dispatch(GetDocument(lawyerID));
     dispatch(GetWarning(lawyerID));
-    dispatch(GetRating(lawyerID))
+    dispatch(GetRating(lawyerID));
   }, [dispatch, lawyerID]);
 
   const handleEdit = () => {

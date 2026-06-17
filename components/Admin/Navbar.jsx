@@ -31,7 +31,11 @@ export default function AdminNavbar({ type = "" }) {
   const searchInputRef = useRef(null);
   const [active, setActive] = useState("");
   const pathname = usePathname();
-  const user = JSON.parse(localStorage.getItem("user"));
+    const [user, setuser] = useState("");
+
+useEffect(() => {
+  setuser(JSON.parse(localStorage.getItem("user")) || "");
+}, []);
   useEffect(() => {
     const match = pathname.match(/case-management\/(\d+)/);
     const lawyermatch = pathname.match(/lawyer-management\/(\d+)/);

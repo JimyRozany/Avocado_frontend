@@ -1,7 +1,7 @@
 "use client";
 import CaseTable from "@/components/Admin/CaseManagement/CaseTable";
 import StatsCards from "@/components/Admin/Home/StatsCards";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Activity,

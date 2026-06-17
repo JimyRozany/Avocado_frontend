@@ -94,11 +94,14 @@ const mapLawyerData = (apiData) => {
 };
 
 export default function ClientProfile() {
-  const { ClientDataDetails, OverviewData , WarningData, loadingWarning} = useSelector(
-    (state) => state.ClientRTK,
-  );
+  const { ClientDataDetails, OverviewData, WarningData, loadingWarning } =
+    useSelector((state) => state.ClientRTK);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const [user, setuser] = useState("");
+
+  useEffect(() => {
+    setuser(JSON.parse(localStorage.getItem("user")) || "");
+  }, []);
   const [avatarFile, setAvatarFile] = useState(null);
   const dispatch = useDispatch();
   const { clientID } = useParams();

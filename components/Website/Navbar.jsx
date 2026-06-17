@@ -23,11 +23,12 @@ const navLinks = [
 export default function Navbar() {
   const { token, loading } = useSelector((state) => state.UserRTK);
   const dispatch = useDispatch();
-  const authToken = localStorage.getItem("authToken");
-  const pathname=usePathname()
+  const [authToken, setauthToken] = useState();
+  const pathname = usePathname();
   const [user, setUser] = useState();
   useEffect(() => {
     setUser(JSON.parse(localStorage.getItem("user")));
+    setauthToken(localStorage.getItem("authToken"));
   }, [token]);
 
   const [menuOpen, setMenuOpen] = useState(false);

@@ -101,7 +101,11 @@ export default function ClientProfile() {
 
   const { OverviewData } = useSelector((state) => state.LawyerRTK);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+    const [user, setuser] = useState("");
+
+useEffect(() => {
+  setuser(JSON.parse(localStorage.getItem("user")) || "");
+}, []);
   const [avatarFile, setAvatarFile] = useState(null);
   const dispatch = useDispatch();
   const { clientID } = useParams();

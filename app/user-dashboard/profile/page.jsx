@@ -94,7 +94,11 @@ const mapLawyerData = (apiData) => {
 };
 
 export default function ClientProfile() {
-  const user = JSON.parse(localStorage.getItem("user"));
+    const [user, setuser] = useState("");
+
+useEffect(() => {
+  setuser(JSON.parse(localStorage.getItem("user")) || "");
+}, []);
   const { ClientDataDetails, OverviewData, WarningData } = useSelector(
     (state) => state.ClientRTK,
   );

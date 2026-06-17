@@ -13,7 +13,7 @@ import {
   Activity,
   Shield,
 } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 const AdminMain = () => {
@@ -22,7 +22,11 @@ const AdminMain = () => {
   );
   const { CaseChatData } = useSelector((state) => state.HomeRTK);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+    const [user, setuser] = useState("");
+
+useEffect(() => {
+  setuser(JSON.parse(localStorage.getItem("user")) || "");
+}, []);
   const dispatch = useDispatch();
   useEffect(() => {
     dispatch(GetClient());

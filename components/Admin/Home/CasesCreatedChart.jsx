@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -35,6 +36,13 @@ const cases = [
 ];
 
 export default function CasesCreatedChart() {
+  const [mounted, setMounted] = useState(false);
+
+useEffect(() => {
+  setMounted(true);
+}, []);
+
+if (!mounted) return null;
   return (
     <div className="bg-white rounded-3xl border border-gray-100 p-5 shadow-sm w-full max-w-sm">
       {/* Header */}

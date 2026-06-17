@@ -6,6 +6,7 @@ import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts";
 import { useRouter } from "next/navigation";
 import DefaultUser from "../../../public/Image/DefaultUser.jpg";
 import pexels from "../../../public/Image/interior-cathedral.png";
+import { useEffect, useState } from "react";
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 30 },
   animate: { opacity: 1, y: 0 },
@@ -17,8 +18,16 @@ const data = [
   { year: "2024", value: 7 },
   { year: "2025", value: 10 },
 ];
+
 export default function Hero() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+useEffect(() => {
+  setMounted(true);
+}, []);
+
+if (!mounted) return null;
   return (
     <section className="bg-[#F5F0E8] min-h-105 ">
       <div className="relative overflow-hidden px-6 md:px-10 w-[95%] mx-auto py-12 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">

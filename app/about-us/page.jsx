@@ -1,3 +1,4 @@
+"use client"
 import AboutSection from "@/components/Website/About/AboutSection";
 import LegalHero from "@/components/Website/About/LegalHero";
 import Footer from "@/components/Website/Footer";
