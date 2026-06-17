@@ -3,6 +3,8 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Calendar, ChevronDown, X } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { GetUser } from "@/lib/UserAuth";
 
 const DATE_RANGES = [
   "Jun 13, 2019 – Jul 12, 2022",
@@ -31,10 +33,10 @@ export default function AdminNavbar({ type = "" }) {
   const searchInputRef = useRef(null);
   const [active, setActive] = useState("");
   const pathname = usePathname();
-    const [user, setuser] = useState("");
-
+  const { UserData } = useSelector((state) => state.UserRTK);
+  const dispatch=useDispatch()
 useEffect(() => {
-  setuser(JSON.parse(localStorage.getItem("user")) || "");
+  dispatch(GetUser())
 }, []);
   useEffect(() => {
     const match = pathname.match(/case-management\/(\d+)/);
@@ -235,7 +237,7 @@ useEffect(() => {
           <>
             <div>
               <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
-                Hi, {user?.name}...
+                Hi, {UserData?.name}...
               </h1>
               <p className="text-sm text-gray-500 mt-0.5">
                 See insights on how{" "}

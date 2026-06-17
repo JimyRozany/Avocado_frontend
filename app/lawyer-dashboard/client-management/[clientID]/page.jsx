@@ -98,14 +98,8 @@ export default function ClientProfile() {
   const { ClientDataDetails, WarningData, loadingWarning } = useSelector(
     (state) => state.ClientRTK,
   );
-
+  const {UserData} = useSelector((state)=>state.HomeRTK)
   const { OverviewData } = useSelector((state) => state.LawyerRTK);
-
-    const [user, setuser] = useState("");
-
-useEffect(() => {
-  setuser(JSON.parse(localStorage.getItem("user")) || "");
-}, []);
   const [avatarFile, setAvatarFile] = useState(null);
   const dispatch = useDispatch();
   const { clientID } = useParams();

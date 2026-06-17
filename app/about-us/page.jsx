@@ -1,4 +1,5 @@
 "use client"
+import PopupChatBot from "@/components/PopupChatBot";
 import AboutSection from "@/components/Website/About/AboutSection";
 import LegalHero from "@/components/Website/About/LegalHero";
 import Footer from "@/components/Website/Footer";
@@ -17,6 +18,7 @@ const page = () => {
       <div className="w-full bg-black pb-10">
         <LegalHero />
       </div>
+      <PopupChatBot />
       <Footer />
     </div>
   );

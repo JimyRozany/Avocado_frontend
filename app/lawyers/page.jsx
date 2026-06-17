@@ -11,6 +11,7 @@ import { CreateRating, GetLawyer } from "@/lib/LawyerManagement";
 import DefaultUser from "../../public/Image/DefaultUser.jpg";
 import { CreateCase } from "@/lib/CaseManagement";
 import { ClipLoader } from "react-spinners";
+import PopupChatBot from "@/components/PopupChatBot";
 export default function LawyersSection() {
   const { LawyerData, loading, LoadingRating } = useSelector(
     (state) => state.LawyerRTK,
@@ -27,11 +28,7 @@ export default function LawyersSection() {
     type: "",
     court_name: "",
   });
-    const [user, setuser] = useState("");
-
-useEffect(() => {
-  setuser(JSON.parse(localStorage.getItem("user")) || "");
-}, []);
+const { UserData } = useSelector((state) => state.UserRTK);
   const [document, setDocument] = useState(null);
   useEffect(() => {
     dispatch(GetLawyer());
@@ -157,7 +154,7 @@ useEffect(() => {
                   transition: { duration: 0.2 },
                 }}
                 onClick={() =>
-                  user.type === "client" &&
+                  UserData?.type === "client" &&
                   setSelectedLawyer({
                     ...lawyer,
                     image: lawyer.image ? lawyer.image : DefaultUser,
@@ -431,7 +428,7 @@ useEffect(() => {
           </>
         )}
       </section>
-
+        <PopupChatBot />
       <Footer />
     </>
   );

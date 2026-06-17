@@ -1,5 +1,6 @@
 "use client";
 
+import PopupChatBot from "@/components/PopupChatBot";
 import Footer from "@/components/Website/Footer";
 import Navbar from "@/components/Website/Navbar";
 import { motion } from "framer-motion";
@@ -101,6 +102,7 @@ export default function TermsPage() {
         ))}
       </div>
     </section>
+    <PopupChatBot />
     <Footer/>
     </>
   );

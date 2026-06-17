@@ -1,6 +1,7 @@
 // app/contact/page.jsx
 "use client";
 
+import PopupChatBot from "@/components/PopupChatBot";
 import ContactForm from "@/components/Website/ContactForm";
 import Footer from "@/components/Website/Footer";
 import Navbar from "@/components/Website/Navbar";
@@ -85,6 +86,7 @@ export default function ContactPage() {
         </div>
       </div>
     </section>
+    <PopupChatBot />
     <Footer/>
    </>
   );

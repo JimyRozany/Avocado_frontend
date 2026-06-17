@@ -6,7 +6,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "avocato.tech",
+        hostname: "api.avocato.tech",
         pathname: "/storage/**",
       },
     ],
