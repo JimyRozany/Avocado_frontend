@@ -5,41 +5,57 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { logout, Updatetoken } from "@/lib/UserAuth";
 import { useDispatch, useSelector } from "react-redux";
-
+import image1 from "../../public/Images/side/Group 2976.png"
+import image2 from "../../public/Images/side/Group 2990.png"
+import image3 from "../../public/Images/side/Group 3000.png"
+import image4 from "../../public/Images/side/Group 3002.png"
+import image5 from "../../public/Images/side/Group 3377.png"
+import image6 from "../../public/Images/side/Group 688.png"
+import image7 from "../../public/Images/side/Layer 2.png"
+import image8 from "../../public/Images/side/Path 8241.png"
+import image9 from "../../public/Images/side/ic_Dashboard.png"
+import image10 from "../../public/Images/side/tabler-icon-coins.png"
+import image11 from "../../public/Images/side/Group 3156.png"
+import Image from "next/image";
 const menuItems = [
-  { icon: "📊", label: "Overview", link: "/admin-dashboard" },
+  { icon: image9, label: "Overview", link: "/admin-dashboard" },
   {
-    icon: "📂",
+    icon: image3,
     label: "Case Management",
     link: "/admin-dashboard/case-management",
   },
   {
-    icon: "👥",
+    icon: image7,
     label: "Client Management",
     link: "/admin-dashboard/client-management",
   },
   {
-    icon: "👤",
+    icon: image8,
     label: "Lawyer Management",
     link: "/admin-dashboard/lawyer-management",
   },
   {
-    icon: "⚖️",
+    icon: image1,
     label: "Legal Management",
     link: "/admin-dashboard/legal-management",
   },
   {
-    icon: "🔐",
+    icon: image11,
     label: "Permissions",
     link: "/admin-dashboard/permissions",
   },
   {
-    icon: "💳",
+    icon: image10,
     label: "Subscription",
     link: "/admin-dashboard/subscription",
   },
+    {
+    icon: image4,
+    label: "Support",
+    link: "/admin-dashboard/support",
+  },
   {
-    icon: "📈",
+    icon: image2,
     label: "Reports",
     link: "/admin-dashboard/report",
   },
@@ -73,7 +89,8 @@ const SideBar = ({ type = "" }) => {
             "Lawyer Management",
             "Client Management",
             "Reports",
-            "Permissions"
+            "Permissions",
+            "Support"
           ].includes(item.label),
       )
       .map((item) => ({
@@ -89,7 +106,8 @@ const SideBar = ({ type = "" }) => {
           ![
             "Legal Management",
             "Lawyer Management",
-            "Permissions"
+            "Permissions",
+            "Support"
           ].includes(item.label),
       )
       .map((item) => ({
@@ -100,7 +118,7 @@ const SideBar = ({ type = "" }) => {
 
   if (type === "user" || type === "lawyer") {
     filteredMenuItems.push({
-      icon: "👤",
+      icon: image4,
       label: "Profile",
       link: `/${type}-dashboard/profile`,
     });
@@ -133,11 +151,7 @@ const SideBar = ({ type = "" }) => {
           href={"/"}
           className="flex items-center space-x-2 px-6 py-5 border-b border-gray-700"
         >
-          <div className="text-3xl font-bold">⚖️</div>
-          <div>
-            <h1 className="text-xl font-bold">AVOCATO</h1>
-            <p className="text-xs tracking-widest">YOUR CASE, YOUR CONTROL</p>
-          </div>
+         <Image src={image6} alt="" className="w-40"/>
         </Link>
 
         {/* Menu Items */}
@@ -148,7 +162,7 @@ const SideBar = ({ type = "" }) => {
               href={link}
               className="flex items-center px-6 py-3 text-gray-300 hover:text-yellow-400 hover:bg-gray-800 transition-colors duration-200"
             >
-              <span className="text-lg mr-4">{icon}</span>
+              <Image src={icon} alt="" className="w-5 h-5 mx-2"/>
               <span className="font-semibold">{label}</span>
             </Link>
           ))}
@@ -160,7 +174,6 @@ const SideBar = ({ type = "" }) => {
             onClick={handleLogout}
             className="w-full flex items-center px-4 cursor-pointer py-3 text-red-400 hover:bg-gray-800 rounded-lg transition-colors duration-200"
           >
-            <span className="text-lg mr-4">🚪</span>
             <span className="font-semibold">Logout</span>
           </button>
         </div>

@@ -1,7 +1,8 @@
 "use client";
 import { motion } from "framer-motion";
 import Link from "next/link";
-
+import image2 from "../../public/Images/side/Group 688.png"
+import Image from "next/image";
 const menuLinks = [
   { name: "Home", link: "/" },
   { name: "About Us", link: "/about-us" },
@@ -18,15 +19,7 @@ export default function Footer() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
         {/* Logo */}
         <div className="col-span-2 md:col-span-1">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="grid grid-cols-2 gap-0.5 w-5 h-5">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="w-2 h-2 bg-white rounded-[1px]" />
-              ))}
-            </div>
-            <span className="text-white font-bold text-sm tracking-widest uppercase">AVOCATO</span>
-          </div>
-          <p className="text-white/30 text-xs leading-relaxed">Find your lawyer easily</p>
+           <Image src={image2} alt="image2" className="w-40"/>
         </div>
 
         {/* Menu */}
