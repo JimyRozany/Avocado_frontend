@@ -10,7 +10,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { GetUser, logout, Updatetoken } from "@/lib/UserAuth";
 import { ClipLoader } from "react-spinners";
 import { usePathname } from "next/navigation";
-
+import image2 from "../../public/Images/side/Group 688.png"
+import Image from "next/image";
 const navLinks = [
   { name: "Home", link: "/" },
   { name: "Find a Lawyer", link: "/lawyers" },
@@ -18,6 +19,7 @@ const navLinks = [
   { name: "Terms", link: "/terms" },
   { name: "About Us", link: "/about-us" },
   { name: "Contact Us", link: "/contact" },
+  { name: "Student", link: "/student" },
 ];
 
 export default function Navbar() {
@@ -74,21 +76,7 @@ export default function Navbar() {
         {/* LOGO */}
         <div className="flex items-center gap-2">
           <div className="flex flex-col items-start">
-            <div className="flex items-center gap-1">
-              <div className="grid grid-cols-2 gap-0.5 w-5 h-5">
-                {[...Array(4)].map((_, i) => (
-                  <div key={i} className="w-2 h-2 bg-white rounded-[1px]" />
-                ))}
-              </div>
-
-              <span className="text-white font-bold text-lg tracking-widest uppercase">
-                AVOCATO
-              </span>
-            </div>
-
-            <span className="text-white/30 text-[8px] tracking-widest ml-6">
-              FIND YOUR LAWYER
-            </span>
+            <Image src={image2} alt="image2" className="w-40"/>
           </div>
         </div>
 

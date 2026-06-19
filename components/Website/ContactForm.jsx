@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { CreateForm } from "@/lib/Home";
 import { ClipLoader } from "react-spinners";
 
-export default function ContactForm() {
+export default function ContactForm({type=""}) {
   const { loading } = useSelector((state) => state.HomeRTK);
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({
@@ -36,6 +36,7 @@ export default function ContactForm() {
       email:formData.email,
       mobile: formData.mobileNumber,
       message:formData.message,
+      type:type
     };
     const result = await dispatch(CreateForm(data));
     if (CreateForm.fulfilled.match(result)) {
@@ -81,11 +82,6 @@ export default function ContactForm() {
             placeholder="Mobile Number"
             value={formData.mobileNumber}
             onChange={handleChange}
-          />
-
-          <ChevronDown
-            size={16}
-            className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500"
           />
         </div>
       </div>

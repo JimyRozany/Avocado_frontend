@@ -28,7 +28,7 @@ export default function LawyersSection() {
     type: "",
     court_name: "",
   });
-const { UserData } = useSelector((state) => state.UserRTK);
+  const { UserData } = useSelector((state) => state.UserRTK);
   const [document, setDocument] = useState(null);
   useEffect(() => {
     dispatch(GetLawyer());
@@ -310,7 +310,12 @@ const { UserData } = useSelector((state) => state.UserRTK);
                       Rate Lawyer
                     </div>
                   </div>
-
+                  <div
+                    onClick={() => setSelectedLawyer(null)}
+                    className="mt-3 w-full rounded-lg border  mx-auto text-center cursor-pointer border-gray-700 px-4 py-3 text-gray-300 transition hover:bg-gray-800"
+                  >
+                    Consultation
+                  </div>
                   <div
                     onClick={() => setSelectedLawyer(null)}
                     className="mt-3 w-full rounded-lg border  mx-auto text-center cursor-pointer border-gray-700 px-4 py-3 text-gray-300 transition hover:bg-gray-800"
@@ -428,7 +433,7 @@ const { UserData } = useSelector((state) => state.UserRTK);
           </>
         )}
       </section>
-        <PopupChatBot />
+      <PopupChatBot />
       <Footer />
     </>
   );
