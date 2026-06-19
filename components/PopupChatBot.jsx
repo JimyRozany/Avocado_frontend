@@ -34,59 +34,73 @@ const PopupChatBot = () => {
     });
   }, [messages]);
 
-  const sendMessage = async (customMessage = null) => {
-    const messageText = customMessage || input;
+const sendMessage = async (customMessage = null) => {
+  const messageText = customMessage || input;
 
-    if (!messageText.trim()) return;
+  if (!messageText.trim()) return;
 
-    const userMessage = {
-      role: "user",
-      content: messageText,
-    };
+  const userMessage = {
+    role: "user",
+    content: messageText,
+  };
 
-    const updatedMessages = [...messages, userMessage];
+  setMessages((prev) => [...prev, userMessage]);
+  setInput("");
+  setLoadingChat(true);
 
-    setMessages(updatedMessages);
-    setInput("");
-    setLoadingChat(true);
-
-    try {
-      const res = await fetch("/api/chat", {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/legal-bot/ask`,
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token && {
+            Authorization: `Bearer ${token}`,
+          }),
         },
         body: JSON.stringify({
-          message: messageText,
-          history: messages.slice(-10),
+          question: messageText,
         }),
-      });
+      }
+    );
 
-      const data = await res.json();
+    const data = await res.json();
 
+    if (data?.status) {
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: data.reply,
+          content:
+            data?.data?.answer || "لم يتم العثور على إجابة.",
         },
       ]);
-    } catch (error) {
-      console.error(error);
-
+    } else {
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: "حدث خطأ أثناء الاتصال بالخادم",
+          content:
+            data?.message || "حدث خطأ أثناء جلب الرد.",
         },
       ]);
     }
+  } catch (error) {
+    console.error(error);
 
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        content: "حدث خطأ أثناء الاتصال بالخادم",
+      },
+    ]);
+  } finally {
     setLoadingChat(false);
-  };
+  }
+};
 
-  
   return (
     <div dir="ltr">
       {/* Overlay */}
@@ -249,23 +263,22 @@ const PopupChatBot = () => {
         </AnimatePresence>
 
         {/* Floating Button */}
-        {(UserData !== undefined &&
-          (Object.keys(UserData).length > 0) && (
-            <button
-              onClick={() => {
-                if (isDragging) return;
-                setShowChat(!showChat);
-              }}
-              className="bg-linear-to-r from-white to-white  w-14 h-14 rounded-full flex items-center justify-center  cursor-pointer"
-            >
-              <Image
-                draggable={false}
-                src={chatBotChat}
-                alt="chatbot"
-                className="w-8 h-8"
-              />
-            </button>
-          ))}
+        {UserData !== undefined && Object.keys(UserData).length > 0 && (
+          <button
+            onClick={() => {
+              if (isDragging) return;
+              setShowChat(!showChat);
+            }}
+            className="bg-linear-to-r from-white to-white  w-14 h-14 rounded-full flex items-center justify-center  cursor-pointer"
+          >
+            <Image
+              draggable={false}
+              src={chatBotChat}
+              alt="chatbot"
+              className="w-8 h-8"
+            />
+          </button>
+        )}
       </motion.div>
     </div>
   );
